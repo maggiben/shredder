@@ -1,0 +1,32 @@
+{
+  "name": "@shredder/ai",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "lint": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@shredder/backtest": "workspace:*",
+    "@shredder/core": "workspace:*",
+    "@shredder/strategies": "workspace:*",
+    "openai": "^4.78.1"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^3.0.5",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  }
+}

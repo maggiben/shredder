@@ -1,0 +1,28 @@
+{
+  "name": "@shredder/worker",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "node --watch dist/index.js",
+    "start": "node dist/index.js",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "test": "node -e \"process.exit(0)\"",
+    "test:coverage": "node -e \"process.exit(0)\""
+  },
+  "dependencies": {
+    "@shredder/ai": "workspace:*",
+    "@shredder/config": "workspace:*",
+    "@shredder/backtest": "workspace:*",
+    "@shredder/core": "workspace:*",
+    "@shredder/data": "workspace:*",
+    "@shredder/exchanges": "workspace:*",
+    "@shredder/risk": "workspace:*",
+    "@shredder/strategies": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.7",
+    "typescript": "^5.7.3"
+  }
+}

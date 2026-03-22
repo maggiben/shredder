@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+  orders       Order[]
+
+  @@map("users")
+}
+
+model Order {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  symbol          String
+  side            String
+  type            String
+  quantity        Decimal  @db.Decimal(28, 12)
+  limitPrice      Decimal? @map("limit_price") @db.Decimal(28, 12)
+  status          String
+  clientOrderId   String?  @map("client_order_id")
+  exchangeOrderId String?  @map("exchange_order_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  trades          Trade[]
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("orders")
+}
+
+model Trade {
+  id         String   @id @default(cuid())
+  orderId    String   @map("order_id")
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  symbol     String
+  side       String
+  quantity   Decimal  @db.Decimal(28, 12)
+  price      Decimal  @db.Decimal(28, 12)
+  fee        Decimal? @db.Decimal(28, 12)
+  executedAt DateTime @default(now()) @map("executed_at")
+
+  @@index([orderId])
+  @@index([executedAt])
+  @@map("trades")
+}
