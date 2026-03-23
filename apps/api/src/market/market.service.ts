@@ -1,7 +1,12 @@
 import { BadGatewayException, BadRequestException, Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import type { Candle } from "@shredder/core";
+import { buildSimulationMetrics, runSimulationLedger } from "@shredder/backtest";
 import { resolveBinanceSpotBaseUrl } from "@shredder/exchanges";
+import { DefaultRiskEngine } from "@shredder/risk";
+import { createStrategyById } from "@shredder/strategies";
 import type { BinanceKlineInterval } from "./dto/klines-query.dto";
+import type { SimulationBodyDto } from "./dto/simulation-body.dto";
 
 export type KlineCandleDto = {
   openTime: number;
@@ -20,6 +25,17 @@ export class MarketService {
   private baseUrl(): string {
     const explicit = this.config.get<string>("BINANCE_BASE_URL")?.trim();
     return resolveBinanceSpotBaseUrl(explicit || undefined);
+  }
+
+  private klinesToCandles(candles: readonly KlineCandleDto[]): Candle[] {
+    return candles.map((k) => ({
+      timestamp: k.openTime,
+      open: Number(k.open),
+      high: Number(k.high),
+      low: Number(k.low),
+      close: Number(k.close),
+      volume: Number(k.volume),
+    }));
   }
 
   async getKlines(input: {
@@ -73,6 +89,58 @@ export class MarketService {
       symbol: input.symbol,
       interval: input.interval,
       candles,
+    };
+  }
+
+  async runSimulation(body: SimulationBodyDto) {
+    const limit = body.limit ?? 500;
+    const kl = await this.getKlines({
+      symbol: body.symbol,
+      interval: body.interval,
+      limit,
+      ...(body.startTime !== undefined ? { startTime: body.startTime } : {}),
+      ...(body.endTime !== undefined ? { endTime: body.endTime } : {}),
+    });
+    const candles = this.klinesToCandles(kl.candles);
+    if (candles.length <= body.warmupBars) {
+      throw new BadRequestException(
+        `Need more candles than warmup (${body.warmupBars}). Got ${candles.length}. Lower warmup or increase limit.`,
+      );
+    }
+    const strategies = body.strategyIds.map((id) => {
+      const s = createStrategyById(id.trim());
+      if (!s) {
+        throw new BadRequestException(`Unknown strategy: ${id}`);
+      }
+      return s;
+    });
+    const risk = new DefaultRiskEngine({
+      maxNotionalFractionPerTrade: body.maxNotionalFractionPerTrade,
+      maxDrawdownFraction: body.maxDrawdownFraction,
+    });
+    const result = runSimulationLedger({
+      symbol: body.symbol,
+      candles,
+      strategies,
+      initialCash: body.initialCash,
+      deployFraction: body.deployFraction,
+      warmupBars: body.warmupBars,
+      risk,
+    });
+    const metrics = buildSimulationMetrics({
+      initialCash: body.initialCash,
+      warmupBars: body.warmupBars,
+      candles,
+      result,
+    });
+    return {
+      baseUrl: kl.baseUrl,
+      symbol: kl.symbol,
+      interval: kl.interval,
+      candleCount: candles.length,
+      metrics,
+      signalStats: result.signalStats,
+      rows: result.rows,
     };
   }
 }

@@ -1,6 +1,7 @@
-import { Controller, Get, Query, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Post, Query, UseGuards } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import { KlinesQueryDto } from "./dto/klines-query.dto";
+import { SimulationBodyDto } from "./dto/simulation-body.dto";
 import { MarketService } from "./market.service";
 
 @Controller("market")
@@ -17,5 +18,10 @@ export class MarketController {
       ...(query.startTime !== undefined ? { startTime: query.startTime } : {}),
       ...(query.endTime !== undefined ? { endTime: query.endTime } : {}),
     });
+  }
+
+  @Post("simulation")
+  simulation(@Body() body: SimulationBodyDto) {
+    return this.market.runSimulation(body);
   }
 }
