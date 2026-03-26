@@ -4,7 +4,8 @@
 [![Build](https://github.com/maggiben/shredder/actions/workflows/build.yml/badge.svg)](https://github.com/maggiben/shredder/actions/workflows/build.yml)
 [![Release](https://github.com/maggiben/shredder/actions/workflows/release.yml/badge.svg)](https://github.com/maggiben/shredder/actions/workflows/release.yml)
 
-![banner](docs/banner.jpg)
+![banner](docs/banner.jpg)\
+
 Monorepo for trading strategy logic, backtesting, a NestJS API (JWT, portfolio/trades/orders/strategies), Postgres persistence, Redis-backed BullMQ queues, and optional OpenAI-powered **suggest-only** agents.
 
 ## Requirements
