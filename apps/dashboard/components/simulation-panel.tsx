@@ -131,7 +131,7 @@ function SimulationCharts({ rows }: { rows: SimulationLedgerRow[] }) {
           id: `${r.barIndex}-${r.timestamp}-${r.executedAction}`,
           t: r.timestamp,
           price: Number(r.tradePrice),
-          side: r.executedAction === "SELL" ? "SELL" : "BUY",
+          side: (r.executedAction === "SELL" ? "SELL" : "BUY") as SimTradeMarker["side"],
         }))
         .filter((m) => Number.isFinite(m.t) && Number.isFinite(m.price)),
     [rows],

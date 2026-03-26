@@ -1,17 +1,17 @@
 "use client";
 
 import { useAtomValue } from "jotai";
-import { IndicatorsExplorer } from "../../../components/indicators-explorer";
+import { OrdersPanel } from "../../../components/orders-panel";
 import { accessTokenAtom } from "../../../state/dashboard-atoms";
 
-export default function IndicatorsPage() {
+export default function OrdersPage() {
   const token = useAtomValue(accessTokenAtom);
 
   if (!token) return null;
 
   return (
-    <div className="max-w-[1100px]">
-      <IndicatorsExplorer token={token} />
+    <div className="mx-auto max-w-[min(100%,48rem)] space-y-8">
+      <OrdersPanel />
     </div>
   );
 }

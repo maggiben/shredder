@@ -151,7 +151,7 @@ export class MarketService {
       });
       const candles = this.klinesToCandles(kl.candles);
       const matrix = coreCandlesToOhlcvMatrix(candles);
-      const raw = computeMigrIndicator(body.indicatorId, matrix, params);
+      const raw = computeMigrIndicator(body.indicatorId, matrix, { ...params, sequential: false });
       return {
         baseUrl: kl.baseUrl,
         symbol: kl.symbol,
@@ -223,7 +223,7 @@ export class MarketService {
       }
 
       const matrix = coreCandlesToOhlcvMatrix(candles);
-      const rawFull = computeMigrIndicator(body.indicatorId, matrix, params);
+      const rawFull = computeMigrIndicator(body.indicatorId, matrix, { ...params, sequential: true });
       rawWindow = this.sliceIndicatorTail(rawFull, windowCandles.length);
 
       if (!this.indicatorWindowHasNaN(rawWindow)) {

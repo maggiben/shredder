@@ -227,11 +227,47 @@ export async function runSimulation(token: string, body: SimulationBody): Promis
   return apiFetch("/market/simulation", { method: "POST", token, body });
 }
 
+export type IndicatorParamMeta = {
+  name: string;
+  type?: string;
+  default?: unknown;
+  description?: string;
+};
+
+export type IndicatorMetaDto = {
+  description: string;
+  params: IndicatorParamMeta[];
+  returns?: string;
+};
+
 export type IndicatorsCatalog = {
-  indicators: Array<{ id: string } & Record<string, unknown>>;
+  indicators: Array<{ id: string } & IndicatorMetaDto>;
 };
 
 export async function getIndicatorsCatalog(token: string): Promise<IndicatorsCatalog> {
   return apiFetch("/market/indicators", { token });
+}
+
+export type IndicatorComputeBody = {
+  indicatorId: string;
+  symbol: string;
+  interval: KlineInterval;
+  limit?: number;
+  startTime?: number;
+  endTime?: number;
+  params?: Record<string, unknown>;
+};
+
+export type IndicatorComputeResponse = {
+  baseUrl: string;
+  symbol: string;
+  interval: string;
+  indicatorId: string;
+  candleCount: number;
+  result: unknown;
+};
+
+export async function computeIndicator(token: string, body: IndicatorComputeBody): Promise<IndicatorComputeResponse> {
+  return apiFetch("/market/indicators/compute", { method: "POST", token, body });
 }
 
