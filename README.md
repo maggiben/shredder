@@ -17,7 +17,7 @@ Algo trading bot 🤖
 [![Release](https://github.com/maggiben/shredder/actions/workflows/release.yml/badge.svg)](https://github.com/maggiben/shredder/actions/workflows/release.yml)
 
 ---
-Shredder is an advanced AI trading framework that aims to **simplify** **researching** and defining **YOUR OWN trading strategies** for backtesting, optimizing, and live trading.
+Shredder is an advanced trading framework that aims to **simplify** **researching** and defining **YOUR OWN trading strategies** with pure math or even AI for backtesting, optimizing, and live trading.
 
 
 ## Requirements
