@@ -1,5 +1,8 @@
 generator client {
   provider = "prisma-client-js"
+  // Hoisted node_modules is not part of Turbo cache; keep the client inside this
+  // package so `^build` restores a usable PrismaClient on cache hits.
+  output   = "../generated/client"
 }
 
 datasource db {

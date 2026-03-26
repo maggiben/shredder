@@ -13,6 +13,7 @@
     }
   },
   "scripts": {
+    "prepare": "prisma generate",
     "prebuild": "prisma generate",
     "build": "tsc -p tsconfig.json",
     "db:generate": "prisma generate",
