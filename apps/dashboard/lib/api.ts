@@ -1,0 +1,237 @@
+import { getApiBaseUrl } from "./config";
+import type { OrderRow, PortfolioSnapshot, StrategyRow, TradeRow } from "./api-types";
+import type { SimulationLedgerRow, SimulationMetrics, SimulationSignalStats } from "@shredder/backtest";
+
+export class ApiError extends Error {
+  status: number;
+  body: unknown;
+
+  constructor(message: string, status: number, body: unknown) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.body = body;
+  }
+}
+
+type ApiFetchOptions = {
+  method?: "GET" | "POST";
+  token?: string | null;
+  body?: unknown;
+  signal?: AbortSignal;
+  headers?: Record<string, string>;
+};
+
+async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): Promise<T> {
+  const { method = "GET", token = null, body, signal, headers = {} } = options;
+  const urlBase = getApiBaseUrl();
+  const url = `${urlBase}${path.startsWith("/") ? path : `/${path}`}`;
+
+  const requestHeaders: Record<string, string> = { ...headers };
+  if (token) requestHeaders.Authorization = `Bearer ${token}`;
+
+  let requestBody: BodyInit | undefined;
+  if (body !== undefined && method !== "GET") {
+    requestHeaders["Content-Type"] = requestHeaders["Content-Type"] ?? "application/json";
+    requestBody = JSON.stringify(body);
+  }
+
+  const init: RequestInit = {
+    method,
+    headers: requestHeaders,
+  };
+  if (requestBody !== undefined) init.body = requestBody;
+  if (signal !== undefined) init.signal = signal;
+
+  const res = await fetch(url, init);
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    let parsed: unknown = text;
+    try {
+      parsed = text ? JSON.parse(text) : null;
+    } catch {
+      // ignore parse failures; we keep the raw text
+    }
+    throw new ApiError(`Request failed (${res.status})`, res.status, parsed);
+  }
+
+  const text = await res.text().catch(() => "");
+  if (!text) return null as T;
+  return JSON.parse(text) as T;
+}
+
+// Keep in sync with backend `BINANCE_KLINE_INTERVALS`.
+export const KLINE_INTERVAL_OPTIONS = [
+  "1m",
+  "3m",
+  "5m",
+  "15m",
+  "30m",
+  "1h",
+  "2h",
+  "4h",
+  "6h",
+  "8h",
+  "12h",
+  "1d",
+  "3d",
+  "1w",
+  "1M",
+] as const;
+
+export type KlineInterval = (typeof KLINE_INTERVAL_OPTIONS)[number];
+
+export async function getHealth(): Promise<{ status: string }> {
+  return apiFetch("/health");
+}
+
+export async function login(email: string, password: string): Promise<{ access_token: string }> {
+  return apiFetch("/auth/login", { method: "POST", body: { email, password } });
+}
+
+export async function register(email: string, password: string): Promise<{ access_token: string }> {
+  return apiFetch("/auth/register", { method: "POST", body: { email, password } });
+}
+
+export async function aiSuggest(token: string, message: string): Promise<{ reply: string }> {
+  return apiFetch("/ai/suggest", { method: "POST", token, body: { message } });
+}
+
+export async function createOrder(
+  token: string,
+  dto: {
+    symbol: string;
+    side: "BUY" | "SELL";
+    type: "MARKET" | "LIMIT";
+    quantity: number;
+    limitPrice?: number;
+    clientOrderId?: string;
+  },
+): Promise<OrderRow> {
+  return apiFetch("/orders", { method: "POST", token, body: dto });
+}
+
+export async function getPortfolio(token: string): Promise<PortfolioSnapshot> {
+  return apiFetch("/portfolio", { token });
+}
+
+export async function listOrders(token: string): Promise<OrderRow[]> {
+  return apiFetch("/orders", { token });
+}
+
+export async function listTrades(token: string): Promise<TradeRow[]> {
+  return apiFetch("/trades", { token });
+}
+
+export async function listStrategies(token: string): Promise<StrategyRow[]> {
+  return apiFetch("/strategies", { token });
+}
+
+export type KlineCandle = {
+  openTime: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+  closeTime: number;
+};
+
+type KlineCandleDto = {
+  openTime: number;
+  open: string;
+  high: string;
+  low: string;
+  close: string;
+  volume: string;
+  closeTime: number;
+};
+
+export type KlinesQuery = {
+  symbol: string;
+  interval: KlineInterval;
+  limit?: number;
+  startTime?: number;
+  endTime?: number;
+};
+
+export async function getKlines(
+  token: string,
+  query: KlinesQuery,
+): Promise<{ baseUrl: string; symbol: string; interval: KlineInterval; candles: KlineCandle[] }> {
+  const qp = new URLSearchParams();
+  qp.set("symbol", query.symbol);
+  qp.set("interval", query.interval);
+  if (query.limit !== undefined) qp.set("limit", String(query.limit));
+  if (query.startTime !== undefined) qp.set("startTime", String(query.startTime));
+  if (query.endTime !== undefined) qp.set("endTime", String(query.endTime));
+
+  const raw = await apiFetch<{
+    baseUrl: string;
+    symbol: string;
+    interval: KlineInterval;
+    candles: KlineCandleDto[];
+  }>(`/market/klines?${qp.toString()}`, { token });
+
+  return {
+    baseUrl: raw.baseUrl,
+    symbol: raw.symbol,
+    interval: raw.interval,
+    candles: raw.candles.map((c) => ({
+      openTime: c.openTime,
+      open: Number(c.open),
+      high: Number(c.high),
+      low: Number(c.low),
+      close: Number(c.close),
+      volume: Number(c.volume),
+      closeTime: c.closeTime,
+    })),
+  };
+}
+
+export type SimulationFeeModel = {
+  takerFeeRate: number;
+  source: "override" | "exchange" | "default";
+};
+
+export type SimulationBody = {
+  symbol: string;
+  interval: KlineInterval;
+  limit?: number;
+  startTime?: number;
+  endTime?: number;
+  initialCash: number;
+  deployFraction: number;
+  warmupBars: number;
+  maxNotionalFractionPerTrade: number;
+  maxDrawdownFraction: number;
+  takerFeeRate?: number;
+  strategyIds: string[];
+};
+
+export type SimulationRunResponse = {
+  baseUrl: string;
+  symbol: string;
+  interval: KlineInterval;
+  candleCount: number;
+  metrics: SimulationMetrics;
+  signalStats: SimulationSignalStats;
+  rows: SimulationLedgerRow[];
+  feeModel: SimulationFeeModel;
+};
+
+export async function runSimulation(token: string, body: SimulationBody): Promise<SimulationRunResponse> {
+  // Backend returns a superset of these fields (it also includes raw candles).
+  // This UI only relies on metrics/signalStats/rows + a few identifiers.
+  return apiFetch("/market/simulation", { method: "POST", token, body });
+}
+
+export type IndicatorsCatalog = {
+  indicators: Array<{ id: string } & Record<string, unknown>>;
+};
+
+export async function getIndicatorsCatalog(token: string): Promise<IndicatorsCatalog> {
+  return apiFetch("/market/indicators", { token });
+}
+
