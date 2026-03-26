@@ -19,7 +19,7 @@ description: >-
 
 - **Deterministic** for the same candles and portfolio snapshot.
 - **No side effects** in `evaluate` (no fetch, no filesystem, no global mutation).
-- Use **`@shredder/core`** indicators or derive from `candles` consistently.
+- Use **`@shredder/core`** indicators, **`@shredder/indicators`** (OHLCV matrix via `coreCandlesToOhlcvMatrix`), or derive from `candles` consistently.
 - Throw on **invalid constructor params** (e.g. bad periods).
 
 ## Registration

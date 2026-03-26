@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Post, Query, UseGuards } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
+import { IndicatorComputeBodyDto } from "./dto/indicator-compute-body.dto";
 import { KlinesQueryDto } from "./dto/klines-query.dto";
 import { SimulationBodyDto } from "./dto/simulation-body.dto";
 import { MarketService } from "./market.service";
@@ -23,5 +24,15 @@ export class MarketController {
   @Post("simulation")
   simulation(@Body() body: SimulationBodyDto) {
     return this.market.runSimulation(body);
+  }
+
+  @Get("indicators")
+  indicatorsCatalog() {
+    return this.market.listIndicatorsCatalog();
+  }
+
+  @Post("indicators/compute")
+  indicatorsCompute(@Body() body: IndicatorComputeBodyDto) {
+    return this.market.computeIndicatorFromMarket(body);
   }
 }

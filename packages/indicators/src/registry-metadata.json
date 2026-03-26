@@ -1,0 +1,3755 @@
+{
+  "acosc": {
+    "description": "Acceleration / Deceleration Oscillator (AC)",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "ad": {
+    "description": "AD - Chaikin A/D Line",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "adosc": {
+    "description": "ADOSC - Chaikin A/D Oscillator (Rust accelerated version)",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 3,
+        "name": "fast_period"
+      },
+      {
+        "default": 10,
+        "name": "slow_period"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "adx": {
+    "description": "ADX - Average Directional Movement Index",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "adxr": {
+    "description": "ADXR - Average Directional Movement Index Rating",
+    "params": [
+      {
+        "description": "OHLCV matrix; column indices: close 2, high 3, low 4.",
+        "name": "candles",
+        "type": "OhlcvMatrix"
+      },
+      {
+        "default": 14,
+        "description": "Smoothing / moving-average period.",
+        "name": "period",
+        "type": "number"
+      },
+      {
+        "default": false,
+        "description": "When true, return the full series; otherwise the last value.",
+        "name": "sequential",
+        "type": "boolean"
+      }
+    ],
+    "returns": "ADXR as a number, or a Float64Array when sequential is true."
+  },
+  "alligator": {
+    "description": "Alligator indicator by Bill Williams",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": "hl2",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "alma": {
+    "description": "ALMA - Arnaud Legoux Moving Average",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 9,
+        "name": "period"
+      },
+      {
+        "default": 6.0,
+        "name": "sigma"
+      },
+      {
+        "default": 0.85,
+        "name": "distribution_offset"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "ao": {
+    "description": "Awesome Oscillator",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "apo": {
+    "description": "APO - Absolute Price Oscillator",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 12,
+        "name": "fast_period"
+      },
+      {
+        "default": 26,
+        "name": "slow_period"
+      },
+      {
+        "default": 0,
+        "name": "matype"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "aroon": {
+    "description": "AROON indicator",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "aroonosc": {
+    "description": "AROONOSC - Aroon Oscillator",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "atr": {
+    "description": "ATR - Average True Range using optimized Rust implementation",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "avgprice": {
+    "description": "AVGPRICE - Average Price",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "bandpass": {
+    "description": "BandPass Filter",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 20,
+        "name": "period"
+      },
+      {
+        "default": 0.3,
+        "name": "bandwidth"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "beta": {
+    "description": "BETA - compares the given candles close price to its benchmark (should be in the same time frame)",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "name": "benchmark_candles"
+      },
+      {
+        "default": 5,
+        "name": "period"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "bollinger_bands": {
+    "description": "BBANDS - Bollinger Bands",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 20,
+        "name": "period"
+      },
+      {
+        "default": 2,
+        "name": "devup"
+      },
+      {
+        "default": 2,
+        "name": "devdn"
+      },
+      {
+        "default": 0,
+        "name": "matype"
+      },
+      {
+        "default": 0,
+        "name": "devtype"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "bollinger_bands_width": {
+    "description": "BBW - Bollinger Bands Width",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 20,
+        "name": "period"
+      },
+      {
+        "default": 2.0,
+        "name": "mult"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "bop": {
+    "description": "BOP - Balance Of Power",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "cc": {
+    "description": "CC - Coppock Curve",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 10,
+        "name": "wma_period"
+      },
+      {
+        "default": 11,
+        "name": "roc_short_period"
+      },
+      {
+        "default": 14,
+        "name": "roc_long_period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "cci": {
+    "description": "CCI - Commodity Channel Index",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "cfo": {
+    "description": "CFO - Chande Forcast Oscillator",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": 100,
+        "name": "scalar"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "cg": {
+    "description": "Center of Gravity (CG)",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 10,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "chande": {
+    "description": "Chandelier Exits",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 22,
+        "name": "period"
+      },
+      {
+        "default": 3.0,
+        "name": "mult"
+      },
+      {
+        "default": "long",
+        "name": "direction"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "chop": {
+    "description": "Choppiness Index (CHOP)",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": 100,
+        "name": "scalar"
+      },
+      {
+        "default": 1,
+        "name": "drift"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "cksp": {
+    "description": "Chande Kroll Stop (CKSP)",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 10,
+        "name": "p"
+      },
+      {
+        "default": 1.0,
+        "name": "x"
+      },
+      {
+        "default": 9,
+        "name": "q"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "cmo": {
+    "description": "CMO - Chande Momentum Oscillator",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "correl": {
+    "description": "CORREL - Pearson's Correlation Coefficient (r)",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 5,
+        "name": "period"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "correlation_cycle": {
+    "description": "\"Correlation Cycle, Correlation Angle, Market State - John Ehlers",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 20,
+        "name": "period"
+      },
+      {
+        "default": 9,
+        "name": "threshold"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "cvi": {
+    "description": "CVI - Chaikins Volatility",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 5,
+        "name": "period"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "cwma": {
+    "description": "Cubed Weighted Moving Average",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "damiani_volatmeter": {
+    "description": "Damiani Volatmeter",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 13,
+        "name": "vis_atr"
+      },
+      {
+        "default": 20,
+        "name": "vis_std"
+      },
+      {
+        "default": 40,
+        "name": "sed_atr"
+      },
+      {
+        "default": 100,
+        "name": "sed_std"
+      },
+      {
+        "default": 1.4,
+        "name": "threshold"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "dec_osc": {
+    "description": "Ehlers Decycler Oscillator",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 125,
+        "name": "hp_period"
+      },
+      {
+        "default": 1,
+        "name": "k"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "decycler": {
+    "description": "Ehlers Simple Decycler",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 125,
+        "name": "hp_period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "dema": {
+    "description": "DEMA - Double Exponential Moving Average",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 30,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "devstop": {
+    "description": "Kase Dev Stops",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 20,
+        "name": "period"
+      },
+      {
+        "default": 0,
+        "name": "mult"
+      },
+      {
+        "default": 0,
+        "name": "devtype"
+      },
+      {
+        "default": "long",
+        "name": "direction"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "di": {
+    "description": "DI - Directional Indicator",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "dm": {
+    "description": "DM - Directional Movement",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "donchian": {
+    "description": "Donchian Channels",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 20,
+        "name": "period"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "dpo": {
+    "description": "DPO - Detrended Price Oscillator",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 5,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "dti": {
+    "description": "DTI by William Blau calculated using Rust implementation for better performance.",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "r"
+      },
+      {
+        "default": 10,
+        "name": "s"
+      },
+      {
+        "default": 5,
+        "name": "u"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "dx": {
+    "description": "DX - Directional Movement Index",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "di_length"
+      },
+      {
+        "default": 14,
+        "name": "adx_smoothing"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "edcf": {
+    "description": "Ehlers Distance Coefficient Filter",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 15,
+        "name": "period"
+      },
+      {
+        "default": "hl2",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "efi": {
+    "description": "EFI - Elders Force Index",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 13,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "ema": {
+    "description": "EMA - Exponential Moving Average using Numba for optimization",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 5,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "emd": {
+    "description": "Empirical Mode Decomposition by John F. Ehlers and Ric Way",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 20,
+        "name": "period"
+      },
+      {
+        "default": 0.5,
+        "name": "delta"
+      },
+      {
+        "default": 0.1,
+        "name": "fraction"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "emv": {
+    "description": "EMV - Ease of Movement",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "length"
+      },
+      {
+        "default": 10000,
+        "name": "div"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "epma": {
+    "description": "End Point Moving Average",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 11,
+        "name": "period"
+      },
+      {
+        "default": 4,
+        "name": "offset"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "er": {
+    "description": "ER - The Kaufman Efficiency indicator",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 5,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "eri": {
+    "description": "Elder Ray Index (ERI)",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 13,
+        "name": "period"
+      },
+      {
+        "default": 1,
+        "name": "matype"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "fisher": {
+    "description": "The Fisher Transform helps identify price reversals.",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 9,
+        "name": "period"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "fosc": {
+    "description": "FOSC - Forecast Oscillator",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 5,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "frama": {
+    "description": "Fractal Adaptive Moving Average (FRAMA)",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 10,
+        "name": "window"
+      },
+      {
+        "default": 1,
+        "name": "FC"
+      },
+      {
+        "default": 300,
+        "name": "SC"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "fwma": {
+    "description": "Fibonacci's Weighted Moving Average (FWMA)",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 5,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "gatorosc": {
+    "description": "Gator Oscillator by Bill M. Williams",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "gauss": {
+    "description": "Gaussian Filter",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": 4,
+        "name": "poles"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "heikin_ashi_candles": {
+    "description": "Heikin Ashi Candles",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "high_pass": {
+    "description": "(1 pole) high-pass filter indicator by John F. Ehlers",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 48,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "high_pass_2_pole": {
+    "description": "(2 pole) high-pass filter indicator by John F. Ehlers",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 48,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "hma": {
+    "description": "Hull Moving Average",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 5,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "hull_suit": {
+    "description": "@author InSilico",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": "Hma",
+        "name": "mode_switch"
+      },
+      {
+        "default": 55,
+        "name": "length"
+      },
+      {
+        "default": 1.0,
+        "name": "length_mult"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "hurst_exponent": {
+    "description": "Hurst Exponent",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 8,
+        "name": "min_chunksize"
+      },
+      {
+        "default": 200,
+        "name": "max_chunksize"
+      },
+      {
+        "default": 5,
+        "name": "num_chunksize"
+      },
+      {
+        "default": 1,
+        "name": "method"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      }
+    ]
+  },
+  "hwma": {
+    "description": "Holt-Winter Moving Average",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 0.2,
+        "name": "na"
+      },
+      {
+        "default": 0.1,
+        "name": "nb"
+      },
+      {
+        "default": 0.1,
+        "name": "nc"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "ichimoku_cloud": {
+    "description": "Ichimoku Cloud",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 9,
+        "name": "conversion_line_period"
+      },
+      {
+        "default": 26,
+        "name": "base_line_period"
+      },
+      {
+        "default": 52,
+        "name": "lagging_line_period"
+      },
+      {
+        "default": 26,
+        "name": "displacement"
+      }
+    ]
+  },
+  "ichimoku_cloud_seq": {
+    "description": "Ichimoku Cloud",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 9,
+        "name": "conversion_line_period"
+      },
+      {
+        "default": 26,
+        "name": "base_line_period"
+      },
+      {
+        "default": 52,
+        "name": "lagging_line_period"
+      },
+      {
+        "default": 26,
+        "name": "displacement"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "ift_rsi": {
+    "description": "Modified Inverse Fisher Transform applied on RSI",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 5,
+        "name": "rsi_period"
+      },
+      {
+        "default": 9,
+        "name": "wma_period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "itrend": {
+    "description": "Instantaneous Trendline",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 0.07,
+        "name": "alpha"
+      },
+      {
+        "default": "hl2",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "jma": {
+    "description": "Jurik Moving Average",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 7,
+        "name": "period"
+      },
+      {
+        "default": 50,
+        "name": "phase"
+      },
+      {
+        "default": 2,
+        "name": "power"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "jsa": {
+    "description": "Jsa Moving Average",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 30,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "kama": {
+    "description": "KAMA - Kaufman Adaptive Moving Average",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": 2,
+        "name": "fast_length"
+      },
+      {
+        "default": 30,
+        "name": "slow_length"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "kaufmanstop": {
+    "description": "Perry Kaufman's Stops",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 22,
+        "name": "period"
+      },
+      {
+        "default": 2,
+        "name": "mult"
+      },
+      {
+        "default": "long",
+        "name": "direction"
+      },
+      {
+        "default": 0,
+        "name": "matype"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "kdj": {
+    "description": "The KDJ Oscillator",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 9,
+        "name": "fastk_period"
+      },
+      {
+        "default": 3,
+        "name": "slowk_period"
+      },
+      {
+        "default": 0,
+        "name": "slowk_matype"
+      },
+      {
+        "default": 3,
+        "name": "slowd_period"
+      },
+      {
+        "default": 0,
+        "name": "slowd_matype"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "keltner": {
+    "description": "Keltner Channels using Numba for optimization",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 20,
+        "name": "period"
+      },
+      {
+        "default": 2,
+        "name": "multiplier"
+      },
+      {
+        "default": 1,
+        "name": "matype"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "kst": {
+    "description": "Know Sure Thing (KST)",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 10,
+        "name": "sma_period1"
+      },
+      {
+        "default": 10,
+        "name": "sma_period2"
+      },
+      {
+        "default": 10,
+        "name": "sma_period3"
+      },
+      {
+        "default": 15,
+        "name": "sma_period4"
+      },
+      {
+        "default": 10,
+        "name": "roc_period1"
+      },
+      {
+        "default": 15,
+        "name": "roc_period2"
+      },
+      {
+        "default": 20,
+        "name": "roc_period3"
+      },
+      {
+        "default": 30,
+        "name": "roc_period4"
+      },
+      {
+        "default": 9,
+        "name": "signal_period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "kurtosis": {
+    "description": "Skewness",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 5,
+        "name": "period"
+      },
+      {
+        "default": "hl2",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "kvo": {
+    "description": "KVO - Klinger Volume Oscillator",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 34,
+        "name": "short_period"
+      },
+      {
+        "default": 55,
+        "name": "long_period"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "linearreg": {
+    "description": "LINEARREG - Linear Regression",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "linearreg_angle": {
+    "description": "LINEARREG_ANGLE - Linear Regression Angle",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "linearreg_intercept": {
+    "description": "LINEARREG_INTERCEPT - Linear Regression Intercept",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "linearreg_slope": {
+    "description": "LINEARREG_SLOPE - Linear Regression Slope",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "lrsi": {
+    "description": "RSI Laguerre Filter",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 0.2,
+        "name": "alpha"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "ma": {
+    "description": "MA — composite moving-average helper (multiple matype variants)",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 30,
+        "name": "period"
+      },
+      {
+        "default": 0,
+        "name": "matype"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "maaq": {
+    "description": "Moving Average Adaptive Q",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 11,
+        "name": "period"
+      },
+      {
+        "default": 2,
+        "name": "fast_period"
+      },
+      {
+        "default": 30,
+        "name": "slow_period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "mab": {
+    "description": "Moving Average Bands",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 10,
+        "name": "fast_period"
+      },
+      {
+        "default": 50,
+        "name": "slow_period"
+      },
+      {
+        "default": 1,
+        "name": "devup"
+      },
+      {
+        "default": 1,
+        "name": "devdn"
+      },
+      {
+        "default": 0,
+        "name": "fast_matype"
+      },
+      {
+        "default": 0,
+        "name": "slow_matype"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "macd": {
+    "description": "MACD - Moving Average Convergence/Divergence",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 12,
+        "name": "fast_period"
+      },
+      {
+        "default": 26,
+        "name": "slow_period"
+      },
+      {
+        "default": 9,
+        "name": "signal_period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "mama": {
+    "description": "MAMA - MESA Adaptive Moving Average (custom implementation)",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 0.5,
+        "name": "fastlimit"
+      },
+      {
+        "default": 0.05,
+        "name": "slowlimit"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "marketfi": {
+    "description": "MARKETFI - Market Facilitation Index",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "mass": {
+    "description": "MASS - Mass Index",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 5,
+        "name": "period"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "mcginley_dynamic": {
+    "description": "McGinley Dynamic",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 10,
+        "name": "period"
+      },
+      {
+        "default": 0.6,
+        "name": "k"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "mean_ad": {
+    "description": "Mean Absolute Deviation",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 5,
+        "name": "period"
+      },
+      {
+        "default": "hl2",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "median_ad": {
+    "description": "Median Absolute Deviation",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 5,
+        "name": "period"
+      },
+      {
+        "default": "hl2",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "medprice": {
+    "description": "MEDPRICE - Median Price",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "mfi": {
+    "description": "MFI - Money Flow Index",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "midpoint": {
+    "description": "MIDPOINT - MidPoint over period",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "midprice": {
+    "description": "MIDPRICE - Midpoint Price over period",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "minmax": {
+    "description": "minmax - Get extrema",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 3,
+        "name": "order"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "mom": {
+    "description": "MOM - Momentum",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 10,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "mwdx": {
+    "description": "MWDX Average",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 0.2,
+        "name": "factor"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "natr": {
+    "description": "NATR - Normalized Average True Range",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "nma": {
+    "description": "Natural Moving Average",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 40,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "nvi": {
+    "description": "NVI - Negative Volume Index",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "obv": {
+    "description": "OBV - On Balance Volume",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "pfe": {
+    "description": "Polarized Fractal Efficiency (PFE)",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 10,
+        "name": "period"
+      },
+      {
+        "default": 5,
+        "name": "smoothing"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "pivot": {
+    "description": "Pivot Points",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 0,
+        "name": "mode"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "pma": {
+    "description": "Ehlers Predictive Moving Average",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": "hl2",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "ppo": {
+    "description": "PPO - Percentage Price Oscillator",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 12,
+        "name": "fast_period"
+      },
+      {
+        "default": 26,
+        "name": "slow_period"
+      },
+      {
+        "default": 0,
+        "name": "matype"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "pvi": {
+    "description": "PVI - Positive Volume Index",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "pwma": {
+    "description": "Pascals Weighted Moving Average (PWMA)",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 5,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "qstick": {
+    "description": "QStick - Moving average of the difference between closing and opening prices",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 5,
+        "name": "period"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "reflex": {
+    "description": "Reflex indicator by John F. Ehlers",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 20,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "rma": {
+    "description": "Moving average used in RSI. It is the exponentially weighted moving average with alpha = 1 / length.",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "length"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "roc": {
+    "description": "ROC - Rate of change : ((price/prevPrice)-1)*100",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 10,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "rocp": {
+    "description": "ROCP - Rate of change Percentage: (price-prevPrice)/prevPrice",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 10,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "rocr": {
+    "description": "ROCR - Rate of change ratio: (price / price_lagged)",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 10,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "rocr100": {
+    "description": "ROCR100 - Rate of change ratio 100 scale: (price/prevPrice)*100",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 10,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "roofing": {
+    "description": "Roofing Filter indicator by John F. Ehlers",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 48,
+        "name": "hp_period"
+      },
+      {
+        "default": 10,
+        "name": "lp_period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "rsi": {
+    "description": "RSI - Relative Strength Index",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "rsmk": {
+    "description": "RSMK - Relative Strength",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "name": "candles_compare"
+      },
+      {
+        "default": 90,
+        "name": "lookback"
+      },
+      {
+        "default": 3,
+        "name": "period"
+      },
+      {
+        "default": 20,
+        "name": "signal_period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "rsx": {
+    "description": "Relative Strength Xtra (rsx)",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "rvi": {
+    "description": "RVI - Relative Volatility Index",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 10,
+        "name": "period"
+      },
+      {
+        "default": 14,
+        "name": "ma_len"
+      },
+      {
+        "default": 1,
+        "name": "matype"
+      },
+      {
+        "default": 0,
+        "name": "devtype"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "safezonestop": {
+    "description": "Safezone Stops - Numba optimized version",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 22,
+        "name": "period"
+      },
+      {
+        "default": 2.5,
+        "name": "mult"
+      },
+      {
+        "default": 3,
+        "name": "max_lookback"
+      },
+      {
+        "default": "long",
+        "name": "direction"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "sar": {
+    "description": "SAR - Parabolic SAR",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 0.02,
+        "name": "acceleration"
+      },
+      {
+        "default": 0.2,
+        "name": "maximum"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "sinwma": {
+    "description": "Sine Weighted Moving Average (SINWMA)",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "skew": {
+    "description": "Skewness",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 5,
+        "name": "period"
+      },
+      {
+        "default": "hl2",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "sma": {
+    "description": "SMA - Simple Moving Average",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 5,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "smma": {
+    "description": "SMMA - Smoothed Moving Average",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 5,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "squeeze_momentum": {
+    "description": "@author lazyBear",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 20,
+        "name": "length"
+      },
+      {
+        "default": 2.0,
+        "name": "mult"
+      },
+      {
+        "default": 20,
+        "name": "length_kc"
+      },
+      {
+        "default": 1.5,
+        "name": "mult_kc"
+      },
+      {
+        "default": true,
+        "name": "sequential"
+      }
+    ]
+  },
+  "sqwma": {
+    "description": "Squared Weighted Moving Average",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "srsi": {
+    "description": "Stochastic RSI \u2013 uses Rust implementation for speed.",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": 14,
+        "name": "period_stoch"
+      },
+      {
+        "default": 3,
+        "name": "k"
+      },
+      {
+        "default": 3,
+        "name": "d"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "srwma": {
+    "description": "Square Root Weighted Moving Average",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "stc": {
+    "description": "STC - Schaff Trend Cycle (Oscillator)",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 23,
+        "name": "fast_period"
+      },
+      {
+        "default": 50,
+        "name": "slow_period"
+      },
+      {
+        "default": 10,
+        "name": "k_period"
+      },
+      {
+        "default": 3,
+        "name": "d1_period"
+      },
+      {
+        "default": 3,
+        "name": "d2_period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "stddev": {
+    "description": "STDDEV - Standard Deviation",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 5,
+        "name": "period"
+      },
+      {
+        "default": 1,
+        "name": "nbdev"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "stiffness": {
+    "description": "@author daviddtech",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 100,
+        "name": "ma_length"
+      },
+      {
+        "default": 60,
+        "name": "stiff_length"
+      },
+      {
+        "default": 3,
+        "name": "stiff_smooth"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      }
+    ]
+  },
+  "stochastic": {
+    "description": "The Stochastic Oscillator",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "fastk_period"
+      },
+      {
+        "default": 3,
+        "name": "slowk_period"
+      },
+      {
+        "default": 0,
+        "name": "slowk_matype"
+      },
+      {
+        "default": 3,
+        "name": "slowd_period"
+      },
+      {
+        "default": 0,
+        "name": "slowd_matype"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "stochf": {
+    "description": "Stochastic Fast",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 5,
+        "name": "fastk_period"
+      },
+      {
+        "default": 3,
+        "name": "fastd_period"
+      },
+      {
+        "default": 0,
+        "name": "fastd_matype"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "supersmoother": {
+    "description": "Super Smoother Filter 2pole Butterworth",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "supersmoother_3_pole": {
+    "description": "Super Smoother Filter 3pole Butterworth",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "supertrend": {
+    "description": "SuperTrend indicator optimized with numba and loop-based calculations.",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 10,
+        "name": "period"
+      },
+      {
+        "default": 3,
+        "name": "factor"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "support_resistance_with_break": {
+    "description": "support_resistance_with_breaks",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 15,
+        "name": "left_bars"
+      },
+      {
+        "default": 15,
+        "name": "right_bars"
+      },
+      {
+        "default": 20,
+        "name": "vol_threshold"
+      }
+    ]
+  },
+  "swma": {
+    "description": "Symmetric Weighted Moving Average (SWMA)",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 5,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "t3": {
+    "description": "T3 - Triple Exponential Moving Average (T3)",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 5,
+        "name": "period"
+      },
+      {
+        "default": 0,
+        "name": "vfactor"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "tema": {
+    "description": "TEMA - Triple Exponential Moving Average",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 9,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "trange": {
+    "description": "TRANGE - True Range",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "trendflex": {
+    "description": "Trendflex indicator by John F. Ehlers",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 20,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "trima": {
+    "description": "TRIMA - Triangular Moving Average",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 30,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "trix": {
+    "description": "TRIX - 1-day Rate-Of-Change (ROC) of a Triple Smooth EMA",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 18,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "tsf": {
+    "description": "TSF - Time Series Forecast",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "tsi": {
+    "description": "True strength index (TSI)",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 25,
+        "name": "long_period"
+      },
+      {
+        "default": 13,
+        "name": "short_period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "ttm_squeeze": {
+    "description": "@author daviddtech",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 20,
+        "name": "length_ttms"
+      },
+      {
+        "default": 2.0,
+        "name": "bb_mult_ttms"
+      },
+      {
+        "default": 2.0,
+        "name": "kc_mult_low_ttms"
+      }
+    ]
+  },
+  "ttm_trend": {
+    "description": "TTM Trend",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 5,
+        "name": "period"
+      },
+      {
+        "default": "hl2",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "typprice": {
+    "description": "TYPPRICE - Typical Price",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "ui": {
+    "description": "Ulcer Index (UI)",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": 100,
+        "name": "scalar"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "ultosc": {
+    "description": "ULTOSC - Ultimate Oscillator",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 7,
+        "name": "timeperiod1"
+      },
+      {
+        "default": 14,
+        "name": "timeperiod2"
+      },
+      {
+        "default": 28,
+        "name": "timeperiod3"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "var": {
+    "description": "VAR - Variance",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": 1,
+        "name": "nbdev"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "vi": {
+    "description": "Vortex Indicator (VI)",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "vidya": {
+    "description": "VIDYA - Variable Index Dynamic Average",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 9,
+        "name": "length"
+      },
+      {
+        "default": true,
+        "name": "fix_cmo"
+      },
+      {
+        "default": true,
+        "name": "select"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "vlma": {
+    "description": "Variable Length Moving Average",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 5,
+        "name": "min_period"
+      },
+      {
+        "default": 50,
+        "name": "max_period"
+      },
+      {
+        "default": 0,
+        "name": "matype"
+      },
+      {
+        "default": 0,
+        "name": "devtype"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "volume": {
+    "description": "Volume with Moving Average",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 20,
+        "name": "period"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "vosc": {
+    "description": "VOSC - Volume Oscillator",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 2,
+        "name": "short_period"
+      },
+      {
+        "default": 5,
+        "name": "long_period"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "voss": {
+    "description": "Voss indicator by John F. Ehlers",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 20,
+        "name": "period"
+      },
+      {
+        "default": 3,
+        "name": "predict"
+      },
+      {
+        "default": 0.25,
+        "name": "bandwith"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "vpci": {
+    "description": "VPCI - Volume Price Confirmation Indicator",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 5,
+        "name": "short_range"
+      },
+      {
+        "default": 25,
+        "name": "long_range"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "vpt": {
+    "description": "Volume Price Trend (VPT)",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "vpwma": {
+    "description": "Variable Power Weighted Moving Average",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": 0.382,
+        "name": "power"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "vwap": {
+    "description": "VWAP",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": "hlc3",
+        "name": "source_type"
+      },
+      {
+        "default": "D",
+        "name": "anchor"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "vwma": {
+    "description": "VWMA - Volume Weighted Moving Average",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 20,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "vwmacd": {
+    "description": "@author David.",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 12,
+        "name": "fast_period"
+      },
+      {
+        "default": 26,
+        "name": "slow_period"
+      },
+      {
+        "default": 9,
+        "name": "signal_period"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "wad": {
+    "description": "WAD - Williams Accumulation/Distribution",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "waddah_attr_explosion": {
+    "description": "@author LazyBear",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 150,
+        "name": "sensitivity"
+      },
+      {
+        "default": 20,
+        "name": "fast_length"
+      },
+      {
+        "default": 40,
+        "name": "slow_length"
+      },
+      {
+        "default": 20,
+        "name": "channel_length"
+      },
+      {
+        "default": 2.0,
+        "name": "mult"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      }
+    ]
+  },
+  "wclprice": {
+    "description": "WCLPRICE - Weighted Close Price",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "wilders": {
+    "description": "WILDERS - Wilders Smoothing",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 5,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "willr": {
+    "description": "WILLR - Williams' %R",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "wma": {
+    "description": "WMA - Weighted Moving Average",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 30,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "wt": {
+    "description": "Wavetrend indicator",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 9,
+        "name": "wtchannellen"
+      },
+      {
+        "default": 12,
+        "name": "wtaveragelen"
+      },
+      {
+        "default": 3,
+        "name": "wtmalen"
+      },
+      {
+        "default": 53,
+        "name": "oblevel"
+      },
+      {
+        "default": "-53",
+        "name": "oslevel"
+      },
+      {
+        "default": "hlc3",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "zlema": {
+    "description": "Zero-Lag Exponential Moving Average",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 20,
+        "name": "period"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  },
+  "zscore": {
+    "description": "zScore",
+    "params": [
+      {
+        "name": "candles"
+      },
+      {
+        "default": 14,
+        "name": "period"
+      },
+      {
+        "default": 0,
+        "name": "matype"
+      },
+      {
+        "default": 1,
+        "name": "nbdev"
+      },
+      {
+        "default": 0,
+        "name": "devtype"
+      },
+      {
+        "default": "close",
+        "name": "source_type"
+      },
+      {
+        "default": false,
+        "name": "sequential"
+      }
+    ]
+  }
+}

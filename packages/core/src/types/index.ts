@@ -1,6 +1,7 @@
 export type { Candle } from "./candle.js";
 export type {
   Order,
+  OrderFillCommission,
   OrderResult,
   OrderSide,
   OrderStatus,

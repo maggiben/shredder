@@ -30,6 +30,7 @@ describe("buildSimulationMetrics", () => {
       initialCash,
       deployFraction: 0.5,
       warmupBars,
+      fee: { takerRate: 0 },
       risk: new DefaultRiskEngine({
         maxNotionalFractionPerTrade: 0.5,
         maxDrawdownFraction: 0.99,

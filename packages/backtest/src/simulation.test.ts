@@ -26,6 +26,7 @@ describe("runSimulationLedger", () => {
       initialCash: 10_000,
       deployFraction: 0.5,
       warmupBars: 15,
+      fee: { takerRate: 0 },
       risk: new DefaultRiskEngine({
         maxNotionalFractionPerTrade: 0.5,
         maxDrawdownFraction: 0.9,

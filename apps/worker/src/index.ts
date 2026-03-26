@@ -27,6 +27,8 @@ const risk = new DefaultRiskEngine({
   maxDrawdownFraction: 0.25,
 });
 
+const estimatedTakerFeeRate = Number(process.env["ESTIMATED_TAKER_FEE_RATE"] ?? "0.001");
+
 function envFlag(key: string): boolean {
   const v = process.env[key]?.trim().toLowerCase();
   return v === "1" || v === "true" || v === "yes";
@@ -205,6 +207,11 @@ async function tick(): Promise<void> {
     equity,
     peakEquity: peak,
     proposedBuyNotional: agg.action === "BUY" ? proposed : 0,
+    ...(agg.action === "BUY"
+      ? {
+          estimatedTakerFeeRate: Number.isFinite(estimatedTakerFeeRate) ? estimatedTakerFeeRate : 0.001,
+        }
+      : {}),
   });
   const payload: Record<string, unknown> = {
     t: new Date().toISOString(),

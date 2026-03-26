@@ -24,6 +24,7 @@
     "@shredder/core": "workspace:*",
     "@shredder/db": "workspace:*",
     "@shredder/exchanges": "workspace:*",
+    "@shredder/indicators": "workspace:*",
     "@shredder/risk": "workspace:*",
     "@shredder/strategies": "workspace:*",
     "bcryptjs": "^2.4.3",

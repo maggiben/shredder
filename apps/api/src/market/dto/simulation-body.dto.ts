@@ -59,6 +59,14 @@ export class SimulationBodyDto {
   @Max(1)
   maxDrawdownFraction!: number;
 
+  /** Optional taker fee override (fraction of quote notional per leg, e.g. 0.001). When omitted, uses Binance trade fee if API keys are configured, else DEFAULT_SIMULATION_TAKER_FEE_RATE / 0.001. */
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  @Max(0.2)
+  takerFeeRate?: number;
+
   @IsArray()
   @ArrayNotEmpty()
   @IsString({ each: true })

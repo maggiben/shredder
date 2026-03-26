@@ -1,7 +1,6 @@
 import type { StrategyInput, StrategySignal } from "@shredder/core";
-import { rsi } from "@shredder/core";
+import { coreCandlesToOhlcvMatrix, rsi } from "@shredder/indicators";
 import type { Strategy } from "./strategy.js";
-import { closesFrom } from "./candles.js";
 
 export class RsiReversionStrategy implements Strategy {
   readonly id: string;
@@ -19,9 +18,9 @@ export class RsiReversionStrategy implements Strategy {
   }
 
   evaluate(input: StrategyInput): StrategySignal {
-    const closes = closesFrom(input.candles);
-    const value = rsi(closes, this.period);
-    if (value === undefined) {
+    const valueRaw = rsi(coreCandlesToOhlcvMatrix(input.candles), this.period, "close", false);
+    const value = typeof valueRaw === "number" ? valueRaw : valueRaw[valueRaw.length - 1]!;
+    if (!Number.isFinite(value)) {
       return {
         action: "HOLD",
         confidence: 0,

@@ -1,5 +1,6 @@
-import type { Order, OrderResult, OrderStatus } from "@shredder/core";
-import type { Balance, BalanceAsset, Exchange } from "./exchange.js";
+import type { Order, OrderFillCommission, OrderResult, OrderStatus } from "@shredder/core";
+import type { Balance, BalanceAsset, Exchange, TradeFeeRates } from "./exchange.js";
+import { commissionQuoteFromBinanceFills } from "./binance-fills.js";
 import { resolveBinanceSpotBaseUrl } from "./binance-defaults.js";
 import { signQuery } from "./binance-signing.js";
 
@@ -34,7 +35,12 @@ interface BinanceOrderResponse {
   status: string;
   executedQty: string;
   cummulativeQuoteQty?: string;
-  fills?: Array<{ price: string; qty: string }>;
+  fills?: Array<{
+    price: string;
+    qty: string;
+    commission?: string;
+    commissionAsset?: string;
+  }>;
 }
 
 export class BinanceAdapter implements Exchange {
@@ -96,16 +102,52 @@ export class BinanceAdapter implements Exchange {
     }
     const data = (await res.json()) as BinanceOrderResponse;
     const averageFillPrice = averagePriceFromFills(data);
+    const comm = commissionQuoteFromBinanceFills(order.symbol, data.fills);
+    const commissionDetails: OrderFillCommission[] | undefined =
+      comm.details.length > 0 ? comm.details.map((d) => ({ asset: d.asset, amount: d.amount })) : undefined;
     const result: OrderResult = {
       orderId: String(data.orderId),
       symbol: order.symbol,
       status: mapBinanceStatus(data.status),
       filledQuantity: Number(data.executedQty),
+      ...(comm.totalQuote > 0 ? { commissionQuote: comm.totalQuote } : {}),
+      ...(commissionDetails !== undefined ? { commissionDetails } : {}),
     };
     if (averageFillPrice !== undefined) {
       return { ...result, averageFillPrice };
     }
     return result;
+  }
+
+  /**
+   * Resolves maker/taker fee **rates** (e.g. 0.001 = 0.1%) for a symbol.
+   * Uses Spot `GET /api/v3/account/commission` so the same base URL works on testnet;
+   * `/sapi/v1/asset/tradeFee` is not available on Spot Testnet (404).
+   */
+  async getTradeFee(symbol: string): Promise<TradeFeeRates> {
+    const sym = symbol.replace("/", "").toUpperCase();
+    const params = this.signedParams({ symbol: sym });
+    const url = `${this.baseUrl}/api/v3/account/commission?${params}`;
+    const res = await fetch(url, {
+      headers: { "X-MBX-APIKEY": this.config.apiKey },
+    });
+    if (!res.ok) {
+      throw new Error(`Binance getTradeFee failed: ${res.status} ${await res.text()}`);
+    }
+    const data = (await res.json()) as {
+      symbol: string;
+      standardCommission?: { maker: string; taker: string };
+    };
+    const std = data.standardCommission;
+    console.log("getTradeFee", JSON.stringify(data, null, 2));
+    if (!std) {
+      throw new Error("Binance getTradeFee: missing standardCommission");
+    }
+    return {
+      symbol: data.symbol ?? sym,
+      makerRate: Number(std.maker),
+      takerRate: Number(std.taker),
+    };
   }
 
   private signedParams(query: Record<string, string>): string {

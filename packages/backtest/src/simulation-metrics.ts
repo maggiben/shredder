@@ -39,6 +39,14 @@ export interface SimulationMetrics {
   /** Average position notional (quote) on bars where the book is long. */
   readonly avgStakeNotional: number;
   readonly totalTradeVolume: number;
+  /** Sum of quote fees on all simulated legs (commissions). */
+  readonly totalFeesPaid: number;
+  /** Average quote fee per executed leg (each BUY or SELL). */
+  readonly avgFeePerLeg: number;
+  /** Effective blended fee in basis points of gross quote volume (fees ÷ volume × 10⁴). */
+  readonly avgEffectiveFeeRateBps: number;
+  /** Net profit ÷ total fees paid (null if no fees). */
+  readonly profitToFeesRatio: number | null;
   readonly daysWin: number;
   readonly daysDraw: number;
   readonly daysLose: number;
@@ -81,7 +89,7 @@ export function parseRoundTrips(trades: readonly BacktestTrade[]): ClosedRoundTr
     if (!s || s.side !== "SELL") {
       continue;
     }
-    const pnl = s.quantity * s.price - b.quantity * b.price;
+    const pnl = s.quantity * s.price - s.fee - (b.quantity * b.price + b.fee);
     out.push({
       buy: b,
       sell: s,
@@ -235,9 +243,16 @@ export function buildSimulationMetrics(input: BuildSimulationMetricsInput): Simu
     losers.length > 0 ? losers.reduce((s, rt) => s + rt.durationMs, 0) / losers.length : 0;
 
   let totalTradeVolume = 0;
+  let totalFeesPaid = 0;
   for (const t of result.trades) {
     totalTradeVolume += t.quantity * t.price;
+    totalFeesPaid += t.fee;
   }
+  const legCount = result.trades.length;
+  const avgFeePerLeg = legCount > 0 ? totalFeesPaid / legCount : 0;
+  const avgEffectiveFeeRateBps =
+    totalTradeVolume > 0 ? (totalFeesPaid / totalTradeVolume) * 10000 : 0;
+  const profitToFeesRatio = totalFeesPaid > 0 ? absoluteProfit / totalFeesPaid : null;
 
   const daily = dailyEquitySeries(rows, initialCash);
   let daysWin = 0;
@@ -303,6 +318,10 @@ export function buildSimulationMetrics(input: BuildSimulationMetricsInput): Simu
     avgDailyProfitPercent,
     avgStakeNotional,
     totalTradeVolume,
+    totalFeesPaid,
+    avgFeePerLeg,
+    avgEffectiveFeeRateBps,
+    profitToFeesRatio,
     daysWin,
     daysDraw,
     daysLose,
@@ -388,6 +407,10 @@ function emptyMetrics(
     avgDailyProfitPercent: 0,
     avgStakeNotional: 0,
     totalTradeVolume: 0,
+    totalFeesPaid: 0,
+    avgFeePerLeg: 0,
+    avgEffectiveFeeRateBps: 0,
+    profitToFeesRatio: null,
     daysWin: 0,
     daysDraw: 0,
     daysLose: 0,

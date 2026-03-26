@@ -2,7 +2,16 @@ import type { Candle, StrategySignal } from "@shredder/core";
 import type { RiskEngine } from "@shredder/risk";
 import type { Strategy } from "@shredder/strategies";
 import { aggregateSignals } from "./aggregate.js";
+import { effectiveTakerRate } from "./fee.js";
 import { portfolioState } from "./portfolio-state.js";
+
+/** Taker-fee model: quote-notional fee on each BUY and SELL leg (rates may vary by bar via resolver). */
+export interface BacktestFeeModel {
+  /** Default / fallback taker rate when no per-bar resolver is set. */
+  readonly takerRate: number;
+  /** Optional time-varying taker rate (e.g. refreshed from exchange). */
+  readonly resolveTakerFeeRate?: (timestampMs: number) => number;
+}
 
 export interface BacktestParams {
   readonly symbol: string;
@@ -13,6 +22,7 @@ export interface BacktestParams {
   readonly deployFraction: number;
   readonly warmupBars: number;
   readonly risk: RiskEngine;
+  readonly fee?: BacktestFeeModel;
 }
 
 export interface BacktestTrade {
@@ -21,6 +31,10 @@ export interface BacktestTrade {
   readonly price: number;
   readonly quantity: number;
   readonly reason: string;
+  /** Fee paid in quote currency on this leg. */
+  readonly fee: number;
+  /** Taker rate applied (fraction of quote notional). */
+  readonly feeRate: number;
 }
 
 export interface BacktestResult {
@@ -62,14 +76,18 @@ export function runBacktest(params: BacktestParams): BacktestResult {
 
     if (agg.action === "BUY" && qty === 0) {
       const budget = equityBefore * params.deployFraction;
+      const feeRate = effectiveTakerRate(params, last.timestamp);
       const riskDecision = params.risk.evaluate("BUY", {
         equity: equityBefore,
         peakEquity,
         proposedBuyNotional: budget,
+        estimatedTakerFeeRate: feeRate,
       });
       if (riskDecision.allow && budget > 0 && markPrice > 0) {
-        const buyQty = budget / markPrice;
-        cash -= buyQty * markPrice;
+        const notional = budget;
+        const fee = notional * feeRate;
+        const buyQty = notional / markPrice;
+        cash -= notional + fee;
         qty += buyQty;
         trades.push({
           timestamp: last.timestamp,
@@ -77,16 +95,23 @@ export function runBacktest(params: BacktestParams): BacktestResult {
           price: markPrice,
           quantity: buyQty,
           reason: agg.reason,
+          fee,
+          feeRate,
         });
       }
     } else if (agg.action === "SELL" && qty > 0) {
-      cash += qty * markPrice;
+      const feeRate = effectiveTakerRate(params, last.timestamp);
+      const gross = qty * markPrice;
+      const fee = gross * feeRate;
+      cash += gross - fee;
       trades.push({
         timestamp: last.timestamp,
         side: "SELL",
         price: markPrice,
         quantity: qty,
         reason: agg.reason,
+        fee,
+        feeRate,
       });
       qty = 0;
     }

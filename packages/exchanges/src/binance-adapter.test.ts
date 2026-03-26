@@ -162,6 +162,25 @@ describe("BinanceAdapter", () => {
     }
   });
 
+  it("fetches trade fee via Spot account commission endpoint", async () => {
+    globalThis.fetch = vi.fn(async (input) => {
+      const url = String(input);
+      expect(url).toContain("/api/v3/account/commission?");
+      expect(url).toContain("symbol=BTCUSDT");
+      return new Response(
+        JSON.stringify({
+          symbol: "BTCUSDT",
+          standardCommission: { maker: "0.001", taker: "0.001" },
+        }),
+        { status: 200 },
+      );
+    }) as typeof fetch;
+
+    const adapter = new BinanceAdapter({ apiKey: "k", apiSecret: "s", baseUrl: "https://example.test" });
+    const fees = await adapter.getTradeFee("BTC/USDT");
+    expect(fees).toEqual({ symbol: "BTCUSDT", makerRate: 0.001, takerRate: 0.001 });
+  });
+
   it("computes average fill from fills array", async () => {
     globalThis.fetch = vi.fn(async () => {
       return new Response(

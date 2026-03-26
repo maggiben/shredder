@@ -18,15 +18,20 @@ export class PortfolioService {
 
     const qtyBySymbol = new Map<string, number>();
     let cashFlow = 0;
+    let feesPaidQuote = 0;
     for (const t of trades) {
       const q = Number(t.quantity);
       const px = Number(t.price);
+      const fee = t.fee != null ? Number(t.fee) : 0;
+      if (Number.isFinite(fee) && fee !== 0) {
+        feesPaidQuote += fee;
+      }
       const signed = t.side === "BUY" ? q : -q;
       qtyBySymbol.set(t.symbol, (qtyBySymbol.get(t.symbol) ?? 0) + signed);
       if (t.side === "BUY") {
-        cashFlow -= q * px;
+        cashFlow -= q * px + fee;
       } else {
-        cashFlow += q * px;
+        cashFlow += q * px - fee;
       }
     }
 
@@ -56,6 +61,7 @@ export class PortfolioService {
     return {
       positions,
       realizedCashFlowApprox: cashFlow,
+      feesPaidQuote,
       tradeCount: trades.length,
       recentTrades: lastTrades.map((t) => ({
         id: t.id,
@@ -63,6 +69,7 @@ export class PortfolioService {
         side: t.side,
         quantity: t.quantity.toString(),
         price: t.price.toString(),
+        ...(t.fee != null ? { fee: t.fee.toString() } : {}),
         executedAt: t.executedAt.toISOString(),
       })),
       ...(exchangeBalances !== undefined ? { exchangeBalances } : {}),

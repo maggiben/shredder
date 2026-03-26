@@ -14,10 +14,15 @@ Next.js front end (`@shredder/dashboard`) for monitoring and interaction. Consum
 
 ## Stack
 
-- Next.js 16, React 19, Tailwind 3, Recharts, TanStack Table.
-- App Router: `app/layout.tsx`, `app/page.tsx` → `components/dashboard-app.tsx`.
-- Supporting UI: `components/simulation-panel.tsx`, `components/trades-charts-panel.tsx`.
+- Next.js 16, React 19, Tailwind 3, Recharts, TanStack Table, **Jotai** (sidebar / mobile menu UI state).
+- App Router: `app/layout.tsx`; **`app/page.tsx` redirects to `/dashboard`**. Shell layout `app/(app)/layout.tsx` wraps routed pages with `DashboardProviders` + `AppShell` (header, sidebar, body, footer).
+- Routes: `/dashboard` (overview), `/charts`, `/indicators` (JWT: catalog + compute via API), `/simulations` (query: `symbol`, `interval`, `limit` synced from the simulations panel), `/settings`. Header search persists `q` via `useRouter().replace` on the active path.
+- UI modules: `components/app-shell.tsx`, `components/dashboard-providers.tsx`, `components/dashboard-overview.tsx`, `components/auth-panels.tsx`, `components/simulation-panel.tsx`, `components/trades-charts-panel.tsx`, `contexts/dashboard-data-context.tsx`, `lib/atoms/ui.ts`, `lib/nav-config.ts`.
 - Lib: `lib/api.ts`, `lib/api-types.ts`, `lib/auth-storage.ts`, `lib/klines-to-candles.ts`, `lib/config.ts`.
+
+## Tests
+
+- Vitest + React Testing Library + jsdom (`vitest.config.ts`, `vitest.setup.ts`). Scripts: `pnpm test`, `pnpm test:coverage` (coverage thresholds apply to `lib/nav-config.ts` and `lib/atoms/ui.ts`).
 
 ## API base URL
 

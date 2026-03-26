@@ -30,10 +30,12 @@ export class DefaultRiskEngine implements RiskEngine {
       };
     }
     const maxNotional = ctx.equity * this.limits.maxNotionalFractionPerTrade;
-    if (ctx.proposedBuyNotional > maxNotional) {
+    const feeRate = ctx.estimatedTakerFeeRate ?? 0;
+    const grossWithFees = ctx.proposedBuyNotional * (1 + feeRate);
+    if (grossWithFees > maxNotional) {
       return {
         allow: false,
-        reason: `Proposed notional ${ctx.proposedBuyNotional.toFixed(2)} exceeds cap ${maxNotional.toFixed(2)}`,
+        reason: `Proposed notional with fees ${grossWithFees.toFixed(2)} exceeds cap ${maxNotional.toFixed(2)} (fee ${(feeRate * 100).toFixed(4)}%)`,
       };
     }
     return { allow: true, reason: "Within risk limits" };

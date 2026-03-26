@@ -1,7 +1,7 @@
 import { Processor, WorkerHost } from "@nestjs/bullmq";
 import { Inject, Logger, Optional } from "@nestjs/common";
 import { Job } from "bullmq";
-import type { Order } from "@shredder/core";
+import type { Order, OrderResult } from "@shredder/core";
 import { Prisma } from "@shredder/db";
 import type { Exchange } from "@shredder/exchanges";
 import { BINANCE_EXCHANGE } from "../exchanges/exchange.tokens";
@@ -35,6 +35,47 @@ export class OrderProcessor extends WorkerHost {
     }
 
     await this.settleDemo(order);
+  }
+
+  private async resolveTradeFeeQuote(
+    exchange: Exchange,
+    orderSymbol: string,
+    fillPx: number,
+    result: OrderResult,
+  ): Promise<Prisma.Decimal | undefined> {
+    if (result.commissionQuote !== undefined && result.commissionQuote > 0) {
+      return new Prisma.Decimal(result.commissionQuote);
+    }
+    if (result.filledQuantity > 0 && fillPx > 0) {
+      try {
+        const tf = await exchange.getTradeFee(orderSymbol);
+        const n = result.filledQuantity * fillPx;
+        return new Prisma.Decimal(n * tf.takerRate);
+      } catch {
+        return undefined;
+      }
+    }
+    return undefined;
+  }
+
+  private async demoTradeFeeQuote(order: {
+    symbol: string;
+    quantity: Prisma.Decimal;
+    price: Prisma.Decimal;
+  }): Promise<Prisma.Decimal | undefined> {
+    const px = Number(order.price);
+    const qty = Number(order.quantity);
+    if (this.exchange) {
+      try {
+        const tf = await this.exchange.getTradeFee(order.symbol);
+        return new Prisma.Decimal(qty * px * tf.takerRate);
+      } catch {
+        return undefined;
+      }
+    }
+    const r = Number(process.env["DEMO_TAKER_FEE_RATE"] ?? "0.001");
+    const rate = Number.isFinite(r) ? r : 0.001;
+    return new Prisma.Decimal(qty * px * rate);
   }
 
   private prismaOrderToCore(order: {
@@ -75,6 +116,10 @@ export class OrderProcessor extends WorkerHost {
       const fillPx =
         result.averageFillPrice ??
         (order.limitPrice != null ? Number(order.limitPrice) : undefined);
+      const feeDec =
+        fillPx !== undefined
+          ? await this.resolveTradeFeeQuote(exchange, order.symbol, fillPx, result)
+          : undefined;
       await this.prisma.$transaction(async (tx) => {
         await tx.order.update({
           where: { id: order.id },
@@ -91,6 +136,7 @@ export class OrderProcessor extends WorkerHost {
               side: order.side,
               quantity: new Prisma.Decimal(result.filledQuantity),
               price: new Prisma.Decimal(fillPx),
+              ...(feeDec !== undefined ? { fee: feeDec } : {}),
             },
           });
         } else if (result.filledQuantity > 0) {
@@ -118,6 +164,11 @@ export class OrderProcessor extends WorkerHost {
     limitPrice: Prisma.Decimal | null;
   }): Promise<void> {
     const price = order.limitPrice ?? new Prisma.Decimal("1");
+    const fee = await this.demoTradeFeeQuote({
+      symbol: order.symbol,
+      quantity: order.quantity,
+      price,
+    });
     await this.prisma.$transaction([
       this.prisma.trade.create({
         data: {
@@ -126,6 +177,7 @@ export class OrderProcessor extends WorkerHost {
           side: order.side,
           quantity: order.quantity,
           price,
+          ...(fee !== undefined ? { fee } : {}),
         },
       }),
       this.prisma.order.update({

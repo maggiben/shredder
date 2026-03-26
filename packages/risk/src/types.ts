@@ -13,6 +13,11 @@ export interface RiskEvaluationContext {
   readonly equity: number;
   readonly peakEquity: number;
   readonly proposedBuyNotional: number;
+  /**
+   * Estimated taker fee as a fraction of quote notional (e.g. 0.001).
+   * When set, BUY approval requires `proposedBuyNotional * (1 + rate) <= maxNotional`.
+   */
+  readonly estimatedTakerFeeRate?: number;
 }
 
 export interface RiskDecision {

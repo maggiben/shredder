@@ -51,6 +51,18 @@ describe("DefaultRiskEngine", () => {
     const decision = engine.evaluate("BUY", ctx(1000, 1000, 150));
     expect(decision.allow).toBe(true);
   });
+
+  it("blocks BUY when notional plus taker fee exceeds cap", () => {
+    const engine = new DefaultRiskEngine(limits);
+    const decision = engine.evaluate("BUY", {
+      equity: 1000,
+      peakEquity: 1000,
+      proposedBuyNotional: 199,
+      estimatedTakerFeeRate: 0.01,
+    });
+    expect(decision.allow).toBe(false);
+    expect(decision.reason).toMatch(/fees/);
+  });
 });
 
 function ctx(equity: number, peak: number, proposed: number) {

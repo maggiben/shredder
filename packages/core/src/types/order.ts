@@ -20,10 +20,19 @@ export interface Order {
   readonly clientOrderId?: string;
 }
 
+export interface OrderFillCommission {
+  readonly asset: string;
+  readonly amount: number;
+}
+
 export interface OrderResult {
   readonly orderId: string;
   readonly symbol: string;
   readonly status: OrderStatus;
   readonly filledQuantity: number;
   readonly averageFillPrice?: number;
+  /** Total commission expressed in the pair's quote currency (approximate if paid in base or other asset). */
+  readonly commissionQuote?: number;
+  /** Raw per-fill commission amounts from the exchange. */
+  readonly commissionDetails?: readonly OrderFillCommission[];
 }

@@ -17,7 +17,7 @@ NestJS backend (`@shredder/api`). Serves REST for operators and the dashboard; p
 - NestJS 11, `class-validator` / `class-transformer`, global `ValidationPipe` (whitelist, forbid unknown, transform).
 - `@nestjs/config` with `envFilePath` from `src/env-paths.ts` (`apiEnvFilePaths()`).
 - `@nestjs/bullmq` + `ioredis`: default Redis `REDIS_HOST` / `REDIS_PORT` (see `app.module.ts`).
-- Workspace: `@shredder/config`, `@shredder/core`, `@shredder/db`, `@shredder/exchanges`, `@shredder/strategies`, `@shredder/ai`.
+- Workspace: `@shredder/config`, `@shredder/core`, `@shredder/db`, `@shredder/exchanges`, `@shredder/indicators`, `@shredder/strategies`, `@shredder/ai`.
 
 ## Module map
 
@@ -28,7 +28,7 @@ NestJS backend (`@shredder/api`). Serves REST for operators and the dashboard; p
 | Prisma | `prisma/` |
 | Orders | `orders/` (processor + queue) |
 | Trades | `trades/` |
-| Market | `market/` (e.g. klines) |
+| Market | `market/` (klines, simulation, indicators catalog + compute) |
 | Portfolio | `portfolio/` |
 | Strategy registry / config | `trading-strategies/` |
 | LLM suggestions (no trade authority) | `ai-suggest/` |

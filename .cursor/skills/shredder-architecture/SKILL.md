@@ -2,7 +2,7 @@
 name: shredder-architecture
 description: >-
   Describes the Shredder monorepo layout (Turborepo, apps/api, apps/dashboard,
-  apps/worker, packages/core, strategies, exchanges, risk, backtest, ai, config,
+  apps/worker,   packages/core, strategies, indicators, exchanges, risk, backtest, ai, config,
   data). Use when navigating the codebase, adding features across packages, or
   explaining how worker, API, and dashboard fit together.
 ---
@@ -14,7 +14,8 @@ description: >-
 - **`apps/api`**: NestJS backend; health and future REST for portfolio, orders, auth.
 - **`apps/dashboard`**: Next.js UI; consumes API when wired.
 - **`apps/worker`**: Tick loop: data → strategies → aggregate → risk → (future) exchange.
-- **`packages/core`**: Shared types (`Candle`, `Order`, `StrategyInput`, `StrategySignal`) and indicators (SMA, EMA, RSI, MACD).
+- **`packages/core`**: Shared types (`Candle`, `Order`, `StrategyInput`, `StrategySignal`) and small built-in indicators (SMA, EMA, RSI, MACD, etc.).
+- **`packages/indicators`**: Full indicator library (`coreCandlesToOhlcvMatrix`, `computeIndicator`, per-stem modules under `src/indicators/`).
 - **`packages/strategies`**: Deterministic strategy classes implementing sync `evaluate`.
 - **`packages/exchanges`**: `Exchange` interface; `BinanceAdapter`; Binance URL resolution (testnet default).
 - **`packages/risk`**: `DefaultRiskEngine` — notional caps, drawdown, optional equity floor.

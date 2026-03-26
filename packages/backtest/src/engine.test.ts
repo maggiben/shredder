@@ -18,6 +18,7 @@ describe("runBacktest", () => {
         initialCash: 1000,
         deployFraction: 0,
         warmupBars: 5,
+        fee: { takerRate: 0 },
         risk: new DefaultRiskEngine({
           maxNotionalFractionPerTrade: 1,
           maxDrawdownFraction: 1,
@@ -42,6 +43,7 @@ describe("runBacktest", () => {
       initialCash: 10_000,
       deployFraction: 0.5,
       warmupBars: 15,
+      fee: { takerRate: 0 },
       risk: new DefaultRiskEngine({
         maxNotionalFractionPerTrade: 0.5,
         maxDrawdownFraction: 0.9,
