@@ -1,10 +1,20 @@
-# Shredder
-
 [![Test](https://github.com/maggiben/shredder/actions/workflows/test.yml/badge.svg)](https://github.com/maggiben/shredder/actions/workflows/test.yml)
 [![Build](https://github.com/maggiben/shredder/actions/workflows/build.yml/badge.svg)](https://github.com/maggiben/shredder/actions/workflows/build.yml)
 [![Release](https://github.com/maggiben/shredder/actions/workflows/release.yml/badge.svg)](https://github.com/maggiben/shredder/actions/workflows/release.yml)
 
-![banner](docs/banner.jpg)\
+
+<div align="center">
+<br>
+<p align="center">
+<img src="docs/banner.jpg" alt="Jesse" height="240" />
+</p>
+
+<p align="center">
+Algo trading bot 🤖
+</p>
+</div>
+
+# Shredder
 
 Monorepo for trading strategy logic, backtesting, a NestJS API (JWT, portfolio/trades/orders/strategies), Postgres persistence, Redis-backed BullMQ queues, and optional OpenAI-powered **suggest-only** agents.
 
