@@ -1,7 +1,3 @@
-[![Test](https://github.com/maggiben/shredder/actions/workflows/test.yml/badge.svg)](https://github.com/maggiben/shredder/actions/workflows/test.yml)
-[![Build](https://github.com/maggiben/shredder/actions/workflows/build.yml/badge.svg)](https://github.com/maggiben/shredder/actions/workflows/build.yml)
-[![Release](https://github.com/maggiben/shredder/actions/workflows/release.yml/badge.svg)](https://github.com/maggiben/shredder/actions/workflows/release.yml)
-
 
 <div align="center">
 <br>
@@ -16,7 +12,13 @@ Algo trading bot 🤖
 
 # Shredder
 
-Monorepo for trading strategy logic, backtesting, a NestJS API (JWT, portfolio/trades/orders/strategies), Postgres persistence, Redis-backed BullMQ queues, and optional OpenAI-powered **suggest-only** agents.
+[![Test](https://github.com/maggiben/shredder/actions/workflows/test.yml/badge.svg)](https://github.com/maggiben/shredder/actions/workflows/test.yml)
+[![Build](https://github.com/maggiben/shredder/actions/workflows/build.yml/badge.svg)](https://github.com/maggiben/shredder/actions/workflows/build.yml)
+[![Release](https://github.com/maggiben/shredder/actions/workflows/release.yml/badge.svg)](https://github.com/maggiben/shredder/actions/workflows/release.yml)
+
+---
+Shredder is an advanced AI trading framework that aims to **simplify** **researching** and defining **YOUR OWN trading strategies** for backtesting, optimizing, and live trading.
+
 
 ## Requirements
 
