@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
+import Link from "next/link";
 import { Provider as JotaiProvider, useAtomValue } from "jotai";
+import { ClawsLogo } from "./claws-logo";
 import { SidebarNav } from "./sidebar-nav";
 import { getApiBaseUrl } from "../lib/config";
 import {
@@ -61,9 +63,15 @@ function DashboardShellInner({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col bg-zinc-950 text-zinc-100">
       <header className="flex flex-col gap-4 border-b border-zinc-800 px-6 py-5 md:flex-row md:items-end md:justify-between">
-        <div className="space-y-2">
-          <p className="text-sm uppercase tracking-widest text-emerald-400">Shredder</p>
-          <h1 className="text-3xl font-semibold text-white">Control tower</h1>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/dashboard/overview"
+            aria-label="Shredder dashboard home"
+            className="flex items-center gap-3 rounded-lg outline-none ring-offset-zinc-950 transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+          >
+            <ClawsLogo variant="onDark" className="h-9 w-9 shrink-0" />
+            <span className="text-sm font-semibold uppercase tracking-[0.22em] text-emerald-400">Shredder</span>
+          </Link>
         </div>
 
         <div className="flex flex-col items-start gap-2 text-xs text-zinc-500 md:items-end">

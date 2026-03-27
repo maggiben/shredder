@@ -15,7 +15,7 @@ Next.js front end (`@shredder/dashboard`) for monitoring and interaction. Consum
 ## Stack
 
 - Next.js 16, React 19, Tailwind 3, Recharts, TanStack Table.
-- App Router: `app/layout.tsx`, `app/page.tsx` → `components/dashboard-app.tsx`.
+- App Router: `app/layout.tsx`, `app/page.tsx` → `components/dashboard-shell.tsx`.
 - Supporting UI: `components/simulation-panel.tsx`, `components/trades-charts-panel.tsx`.
 - Lib: `lib/api.ts`, `lib/api-types.ts`, `lib/auth-storage.ts`, `lib/klines-to-candles.ts`, `lib/config.ts`.
 

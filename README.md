@@ -2,7 +2,7 @@
 <div align="center">
 <br>
 <p align="center">
-<img src="docs/banner.jpg" alt="Jesse" height="240" />
+<img src="docs/claws.svg" alt="Shredder" height="72" />
 </p>
 
 <p align="center">
