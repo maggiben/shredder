@@ -15,3 +15,7 @@ export {
   type MarketDataProviderKind,
   type MarketDataSourceEnvResult,
 } from "./factory.js";
+export {
+  createBinanceKlinesMarketDataSource,
+  type BinanceKlinesMarketDataSourceConfig,
+} from "./binance-klines-market-data-source.js";

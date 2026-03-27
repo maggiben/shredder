@@ -18,7 +18,8 @@
     "lint": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@shredder/core": "workspace:*"
+    "@shredder/core": "workspace:*",
+    "@shredder/exchanges": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.10.7",

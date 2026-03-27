@@ -12,6 +12,7 @@ import { PrismaModule } from "./prisma/prisma.module";
 import { TradingStrategiesModule } from "./trading-strategies/trading-strategies.module";
 import { TradesModule } from "./trades/trades.module";
 import { MarketModule } from "./market/market.module";
+import { TradingBotsModule } from "./trading-bots/trading-bots.module";
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { MarketModule } from "./market/market.module";
     PortfolioModule,
     TradingStrategiesModule,
     AiSuggestModule,
+    TradingBotsModule,
   ],
   controllers: [AppController],
 })

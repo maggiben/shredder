@@ -23,6 +23,16 @@ describe("createMarketDataSourceFromEnv", () => {
     expect(r.source).not.toBeNull();
   });
 
+  it("builds binance source", () => {
+    const r = createMarketDataSourceFromEnv({
+      MARKET_DATA_PROVIDER: "binance",
+      BINANCE_BASE_URL: "https://testnet.binance.vision",
+    });
+    expect(r.provider).toBe("binance");
+    expect(r.source).not.toBeNull();
+    expect(typeof r.source!.getCandles).toBe("function");
+  });
+
   it("throws for polygon until implemented", () => {
     expect(() =>
       createMarketDataSourceFromEnv({ MARKET_DATA_PROVIDER: "polygon" }),

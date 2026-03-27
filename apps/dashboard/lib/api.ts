@@ -15,7 +15,7 @@ export class ApiError extends Error {
 }
 
 type ApiFetchOptions = {
-  method?: "GET" | "POST";
+  method?: "GET" | "POST" | "PATCH" | "DELETE";
   token?: string | null;
   body?: unknown;
   signal?: AbortSignal;
@@ -269,5 +269,76 @@ export type IndicatorComputeResponse = {
 
 export async function computeIndicator(token: string, body: IndicatorComputeBody): Promise<IndicatorComputeResponse> {
   return apiFetch("/market/indicators/compute", { method: "POST", token, body });
+}
+
+export type TradingBotStatus = "STOPPED" | "STARTING" | "RUNNING" | "ERROR";
+
+export type TradingBotConfig = {
+  symbol: string;
+  tickMs: number;
+  candleInterval: string;
+  candleLimit: number;
+  marketDataProvider: "demo" | "coingecko" | "binance";
+  exchangeId: "binance" | "none";
+  paperTrading: boolean;
+  binanceBaseUrl?: string;
+  logStrategies: boolean;
+  aiAnalyst: boolean;
+  estimatedTakerFeeRate: number;
+  extraEnv: Record<string, string>;
+};
+
+export type TradingBotRow = {
+  id: string;
+  name: string;
+  status: TradingBotStatus;
+  config: TradingBotConfig;
+  processPid: number | null;
+  lastTickAt: string | null;
+  lastOutput: Record<string, unknown> | null;
+  lastError: string | null;
+  createdAt: string;
+  updatedAt: string;
+  runtime: { alive: boolean; logTail: string[] };
+};
+
+export type CreateTradingBotBody = {
+  name: string;
+  symbol?: string;
+  tickMs?: number;
+  candleInterval?: string;
+  candleLimit?: number;
+  marketDataProvider?: "demo" | "coingecko" | "binance";
+  exchangeId?: "binance" | "none";
+  paperTrading?: boolean;
+  binanceBaseUrl?: string;
+  logStrategies?: boolean;
+  aiAnalyst?: boolean;
+  estimatedTakerFeeRate?: number;
+  extraEnv?: Record<string, string>;
+};
+
+export async function listTradingBots(token: string): Promise<TradingBotRow[]> {
+  return apiFetch("/trading-bots", { token });
+}
+
+export async function createTradingBot(token: string, body: CreateTradingBotBody): Promise<TradingBotRow> {
+  return apiFetch("/trading-bots", { method: "POST", token, body });
+}
+
+export async function startTradingBot(token: string, id: string): Promise<TradingBotRow> {
+  return apiFetch(`/trading-bots/${id}/start`, { method: "POST", token });
+}
+
+export async function stopTradingBot(token: string, id: string): Promise<TradingBotRow> {
+  return apiFetch(`/trading-bots/${id}/stop`, { method: "POST", token });
+}
+
+export async function deleteTradingBot(token: string, id: string): Promise<{ ok: boolean }> {
+  return apiFetch(`/trading-bots/${id}`, { method: "DELETE", token });
+}
+
+export async function getTradingBotLogs(token: string, id: string): Promise<{ lines: string[] }> {
+  return apiFetch(`/trading-bots/${id}/logs`, { token });
 }
 

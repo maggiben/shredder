@@ -6,6 +6,7 @@ import { searchParamsToQueryRecord } from "../lib/search-params";
 
 const NAV_ITEMS: Array<{ href: string; label: string }> = [
   { href: "/dashboard/overview", label: "Overview" },
+  { href: "/dashboard/bots", label: "Bots" },
   { href: "/dashboard/orders", label: "Orders" },
   { href: "/dashboard/charts", label: "Trades & charts" },
   { href: "/dashboard/simulations", label: "Simulations" },

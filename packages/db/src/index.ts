@@ -1,2 +1,2 @@
-export { PrismaClient, Prisma } from "../generated/client";
-export type { Order, Trade, User } from "../generated/client";
+export { PrismaClient, Prisma, TradingBotStatus } from "../generated/client";
+export type { Order, Trade, TradingBot, User } from "../generated/client";

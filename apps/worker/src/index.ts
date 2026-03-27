@@ -12,7 +12,6 @@ import {
 
 const intervalMs = Number(process.env["WORKER_TICK_MS"] ?? "15000");
 
-
 const marketDataEnv = createMarketDataSourceFromEnv();
 const marketData = marketDataEnv.source;
 
@@ -34,8 +33,34 @@ function envFlag(key: string): boolean {
   return v === "1" || v === "true" || v === "yes";
 }
 
+const MAX_PAPER_TRADE_EVENTS = 120;
+
+/** Rolling paper position for dashboard entry/exit markers (not exchange execution). */
+type PaperTradeEvent = { kind: "entry" | "exit"; timestamp: number; price: number };
+
+let paperPosition: "flat" | "long" = "flat";
+let paperTradeHistory: PaperTradeEvent[] = [];
+
+/** When unset, defaults to paper mode for safety. Set `WORKER_PAPER_TRADING=0` to mark live intent. */
+function paperTradingFromEnv(): boolean {
+  const v = process.env["WORKER_PAPER_TRADING"]?.trim().toLowerCase();
+  if (v === undefined || v === "") {
+    return true;
+  }
+  if (v === "0" || v === "false" || v === "no") {
+    return false;
+  }
+  return v === "1" || v === "true" || v === "yes";
+}
+
 const workerAiAnalyst = envFlag("WORKER_AI_ANALYST");
 const workerLogStrategies = envFlag("WORKER_LOG_STRATEGIES");
+const paperTrading = paperTradingFromEnv();
+
+const workerBotId = process.env["WORKER_BOT_ID"]?.trim() ?? "";
+const workerWebhookUrl = process.env["WORKER_OUTPUT_WEBHOOK_URL"]?.trim() ?? "";
+const workerWebhookSecret = process.env["WORKER_WEBHOOK_SECRET"]?.trim() ?? "";
+const workerExchangeId = process.env["WORKER_EXCHANGE_ID"]?.trim() || "binance";
 
 let openaiClient: ReturnType<typeof createOpenAIClient> | undefined;
 function getOpenAI(): ReturnType<typeof createOpenAIClient> | undefined {
@@ -47,6 +72,25 @@ function getOpenAI(): ReturnType<typeof createOpenAIClient> | undefined {
     openaiClient = createOpenAIClient(key);
   }
   return openaiClient;
+}
+
+async function emitTickWebhook(payload: Record<string, unknown>): Promise<void> {
+  if (!workerWebhookUrl || !workerBotId) {
+    return;
+  }
+  try {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (workerWebhookSecret !== "") {
+      headers["X-Shredder-Webhook-Secret"] = workerWebhookSecret;
+    }
+    await fetch(workerWebhookUrl, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ botId: workerBotId, payload }),
+    });
+  } catch {
+    // Orchestrator may be down; worker keeps ticking.
+  }
 }
 
 /** Advances each time demo data is built so ticks cycle BUY → SELL → HOLD aggregates. */
@@ -213,8 +257,27 @@ async function tick(): Promise<void> {
         }
       : {}),
   });
+
+  const lastBar = window.at(-1);
+  if (lastBar !== undefined) {
+    const canEnter = agg.action === "BUY" && decision.allow && paperPosition === "flat";
+    const canExit = agg.action === "SELL" && paperPosition === "long";
+    if (canEnter) {
+      paperPosition = "long";
+      const ev: PaperTradeEvent = { kind: "entry", timestamp: lastBar.timestamp, price: lastBar.close };
+      paperTradeHistory = [...paperTradeHistory, ev].slice(-MAX_PAPER_TRADE_EVENTS);
+    } else if (canExit) {
+      paperPosition = "flat";
+      const ev: PaperTradeEvent = { kind: "exit", timestamp: lastBar.timestamp, price: lastBar.close };
+      paperTradeHistory = [...paperTradeHistory, ev].slice(-MAX_PAPER_TRADE_EVENTS);
+    }
+  }
+
   const payload: Record<string, unknown> = {
     t: new Date().toISOString(),
+    botId: workerBotId || undefined,
+    exchangeId: workerExchangeId,
+    paperTrading,
     symbol,
     candleCount: window.length,
     aggregated: agg,
@@ -222,6 +285,15 @@ async function tick(): Promise<void> {
     marketDataProvider: marketDataEnv.provider ?? "demo",
     candleInterval,
     candleLimit,
+    candles: window.map((c) => ({
+      timestamp: c.timestamp,
+      open: c.open,
+      high: c.high,
+      low: c.low,
+      close: c.close,
+      volume: c.volume,
+    })),
+    paperTrades: paperTradeHistory,
   };
   if (workerLogStrategies) {
     payload["strategies"] = perStrategy.map((p) => ({
@@ -237,6 +309,7 @@ async function tick(): Promise<void> {
   }
   // eslint-disable-next-line no-console
   console.log(JSON.stringify(payload));
+  void emitTickWebhook(payload);
 }
 
 setInterval(() => {

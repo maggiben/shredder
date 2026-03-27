@@ -1,4 +1,5 @@
 import type { MarketDataSource } from "./types.js";
+import { createBinanceKlinesMarketDataSource } from "./binance-klines-market-data-source.js";
 import {
   createCoinGeckoMarketDataSource,
   defaultCoinGeckoMarketDataSourceConfig,
@@ -6,7 +7,7 @@ import {
 } from "./coingecko-market-data-source.js";
 import { DEFAULT_COINGECKO_SYMBOL_MAP } from "./symbol-map.js";
 
-export type MarketDataProviderKind = "coingecko" | "polygon";
+export type MarketDataProviderKind = "coingecko" | "polygon" | "binance";
 
 export type MarketDataSourceEnvResult =
   | { readonly provider: null; readonly source: null }
@@ -65,6 +66,7 @@ function mergeSymbolMap(
  * first in the app entry so repo-root `.env` is loaded before this runs.
  *
  * - `MARKET_DATA_PROVIDER=coingecko` — CoinGecko `market_chart` (rate-limited).
+ * - `MARKET_DATA_PROVIDER=binance` — public Spot klines (`BINANCE_BASE_URL` / testnet default).
  * - `MARKET_DATA_PROVIDER=polygon` — reserved; throws until implemented.
  * - unset / `none` / `demo` — returns `{ source: null }` for in-memory/demo feeds.
  */
@@ -78,13 +80,23 @@ export function createMarketDataSourceFromEnv(
 
   if (raw === "polygon") {
     throw new Error(
-      'MARKET_DATA_PROVIDER=polygon is not implemented yet — use "coingecko" or add a Polygon implementation.',
+      'MARKET_DATA_PROVIDER=polygon is not implemented yet — use "coingecko", "binance", or add a Polygon implementation.',
     );
+  }
+
+  if (raw === "binance") {
+    const explicit = envString(env, "BINANCE_BASE_URL");
+    return {
+      provider: "binance",
+      source: createBinanceKlinesMarketDataSource(
+        explicit !== undefined ? { baseUrl: explicit } : {},
+      ),
+    };
   }
 
   if (raw !== "coingecko") {
     throw new Error(
-      `Unknown MARKET_DATA_PROVIDER "${raw}" (expected coingecko, polygon, none, or demo)`,
+      `Unknown MARKET_DATA_PROVIDER "${raw}" (expected coingecko, binance, polygon, none, or demo)`,
     );
   }
 

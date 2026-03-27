@@ -317,6 +317,9 @@ importers:
       '@shredder/core':
         specifier: workspace:*
         version: link:../core
+      '@shredder/exchanges':
+        specifier: workspace:*
+        version: link:../exchanges
     devDependencies:
       '@types/node':
         specifier: ^22.10.7
