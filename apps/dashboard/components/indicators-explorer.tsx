@@ -16,6 +16,7 @@ import {
   getIndicatorsCatalog,
   getKlines,
   KLINE_INTERVAL_OPTIONS,
+  type JsonValue,
   type IndicatorsCatalog,
   type IndicatorComputeResponse,
   type KlineCandle,
@@ -54,7 +55,22 @@ function parseSymbol(raw: string): string | null {
   return s;
 }
 
-function parseParamsJson(raw: string): Record<string, unknown> | { error: string } {
+function isJsonValue(value: unknown): value is JsonValue {
+  if (value === null) return true;
+  const valueType = typeof value;
+  if (valueType === "string" || valueType === "number" || valueType === "boolean") {
+    return true;
+  }
+  if (Array.isArray(value)) {
+    return value.every((entry) => isJsonValue(entry));
+  }
+  if (valueType === "object") {
+    return Object.values(value as Record<string, unknown>).every((entry) => isJsonValue(entry));
+  }
+  return false;
+}
+
+function parseParamsJson(raw: string): Record<string, JsonValue> | { error: string } {
   const t = raw.trim();
   if (!t) return {};
   try {
@@ -62,7 +78,10 @@ function parseParamsJson(raw: string): Record<string, unknown> | { error: string
     if (v === null || typeof v !== "object" || Array.isArray(v)) {
       return { error: "Params must be a JSON object." };
     }
-    return v as Record<string, unknown>;
+    if (!isJsonValue(v)) {
+      return { error: "Params must only contain valid JSON values." };
+    }
+    return v as Record<string, JsonValue>;
   } catch {
     return { error: "Invalid JSON in params." };
   }

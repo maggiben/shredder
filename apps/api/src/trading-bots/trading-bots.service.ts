@@ -13,6 +13,7 @@ import * as readline from "readline";
 import { join } from "path";
 import { PrismaService } from "../prisma/prisma.service";
 import type { CreateTradingBotDto } from "./dto/create-trading-bot.dto";
+import type { TradingBotTickPayload } from "./trading-bot-tick-payload";
 import type { UpdateTradingBotDto } from "./dto/update-trading-bot.dto";
 import {
   applyTradingBotConfigPatch,
@@ -22,10 +23,35 @@ import {
 } from "./trading-bot-config";
 
 const MAX_LOG_LINES = 500;
+const DEFAULT_MARKET_TRAIL_LIMIT = 800;
+const DEFAULT_PAPER_TRAIL_LIMIT = 800;
 
 type RuntimeEntry = {
   readonly proc: ChildProcess;
   readonly lines: string[];
+};
+
+type CandleTrailRow = {
+  timestamp: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+};
+
+type PaperTrailRow = {
+  kind: "buy" | "sell";
+  timestamp: number;
+  price: number;
+};
+
+type PrismaKnownRequestErrorLike = {
+  code?: unknown;
+  meta?: {
+    modelName?: unknown;
+    table?: unknown;
+  };
 };
 
 @Injectable()
@@ -36,6 +62,24 @@ export class TradingBotsService implements OnModuleInit, OnModuleDestroy {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
   ) {}
+
+  private isMissingTrailTablesError(error: unknown): boolean {
+    if (typeof error !== "object" || error === null) {
+      return false;
+    }
+    const e = error as PrismaKnownRequestErrorLike;
+    if (e.code !== "P2021") {
+      return false;
+    }
+    const table = typeof e.meta?.table === "string" ? e.meta.table : "";
+    const modelName = typeof e.meta?.modelName === "string" ? e.meta.modelName : "";
+    return (
+      table.includes("trading_bot_candles") ||
+      table.includes("trading_bot_paper_trades") ||
+      modelName === "TradingBotCandle" ||
+      modelName === "TradingBotPaperTrade"
+    );
+  }
 
   async onModuleInit(): Promise<void> {
     await this.prisma.tradingBot.updateMany({
@@ -200,6 +244,90 @@ export class TradingBotsService implements OnModuleInit, OnModuleDestroy {
     return bot;
   }
 
+  private marketTrailLimit(): number {
+    const raw = Number(this.config.get<string>("TRADING_BOT_MARKET_TRAIL_LIMIT") ?? "");
+    if (!Number.isFinite(raw) || raw < 50) {
+      return DEFAULT_MARKET_TRAIL_LIMIT;
+    }
+    return Math.floor(raw);
+  }
+
+  private paperTrailLimit(): number {
+    const raw = Number(this.config.get<string>("TRADING_BOT_PAPER_TRAIL_LIMIT") ?? "");
+    if (!Number.isFinite(raw) || raw < 50) {
+      return DEFAULT_PAPER_TRAIL_LIMIT;
+    }
+    return Math.floor(raw);
+  }
+
+  private extractCandles(payload: TradingBotTickPayload): CandleTrailRow[] {
+    return payload.candles
+      .filter(
+        (c) =>
+          Number.isFinite(c.timestamp) &&
+          Number.isFinite(c.open) &&
+          Number.isFinite(c.high) &&
+          Number.isFinite(c.low) &&
+          Number.isFinite(c.close) &&
+          Number.isFinite(c.volume),
+      )
+      .map((c) => ({
+        timestamp: c.timestamp,
+        open: c.open,
+        high: c.high,
+        low: c.low,
+        close: c.close,
+        volume: c.volume,
+      }));
+  }
+
+  private extractPaperEvents(payload: TradingBotTickPayload): PaperTrailRow[] {
+    const ev = payload.paperTradeEvent;
+    if (
+      ev === undefined ||
+      !Number.isFinite(ev.timestamp) ||
+      !Number.isFinite(ev.price) ||
+      (ev.kind !== "buy" && ev.kind !== "sell")
+    ) {
+      return [];
+    }
+    return [{ kind: ev.kind, timestamp: ev.timestamp, price: ev.price }];
+  }
+
+  private async pruneMarketTrail(botId: string): Promise<void> {
+    const limit = this.marketTrailLimit();
+    const stale = await this.prisma.tradingBotCandle.findMany({
+      where: { botId },
+      orderBy: [{ timestamp: "desc" }, { createdAt: "desc" }],
+      skip: limit,
+      take: 5000,
+      select: { id: true },
+    });
+    if (stale.length === 0) {
+      return;
+    }
+    await this.prisma.tradingBotCandle.deleteMany({
+      where: { id: { in: stale.map((r) => r.id) } },
+    });
+  }
+
+  private async prunePaperTrail(botId: string): Promise<void> {
+    const limit = this.paperTrailLimit();
+    const stale = await this.prisma.tradingBotPaperTrade.findMany({
+      where: { botId },
+      orderBy: [{ timestamp: "desc" }, { createdAt: "desc" }],
+      skip: limit,
+      take: 5000,
+      select: { id: true },
+    });
+    if (stale.length === 0) {
+      return;
+    }
+    await this.prisma.tradingBotPaperTrade.deleteMany({
+      where: { id: { in: stale.map((r) => r.id) } },
+    });
+  }
+
   async listForUser(userId: string) {
     const rows = await this.prisma.tradingBot.findMany({
       where: { userId },
@@ -241,7 +369,7 @@ export class TradingBotsService implements OnModuleInit, OnModuleDestroy {
         userId,
         name: dto.name.trim(),
         status: TradingBotStatus.STOPPED,
-        config: config as unknown as Prisma.InputJsonValue,
+        config: config as Prisma.InputJsonValue,
       },
     });
     return this.present(bot);
@@ -259,7 +387,7 @@ export class TradingBotsService implements OnModuleInit, OnModuleDestroy {
       where: { id: botId },
       data: {
         name,
-        config: nextConfig as unknown as Prisma.InputJsonValue,
+        config: nextConfig as Prisma.InputJsonValue,
       },
     });
     return this.present(updated);
@@ -336,19 +464,107 @@ export class TradingBotsService implements OnModuleInit, OnModuleDestroy {
     return { lines: rt !== undefined ? rt.lines : [] };
   }
 
-  async handleTickReport(botId: string, payload: Record<string, unknown>): Promise<void> {
+  async trailsForUser(userId: string, botId: string) {
+    await this.ensureOwner(userId, botId);
+    let candles: Awaited<ReturnType<typeof this.prisma.tradingBotCandle.findMany>>;
+    let paperTrades: Awaited<ReturnType<typeof this.prisma.tradingBotPaperTrade.findMany>>;
+    try {
+      [candles, paperTrades] = await Promise.all([
+        this.prisma.tradingBotCandle.findMany({
+          where: { botId },
+          orderBy: { timestamp: "asc" },
+        }),
+        this.prisma.tradingBotPaperTrade.findMany({
+          where: { botId },
+          orderBy: { timestamp: "asc" },
+        }),
+      ]);
+    } catch (error) {
+      if (this.isMissingTrailTablesError(error)) {
+        return { marketTrail: [], paperTrail: [] };
+      }
+      throw error;
+    }
+    return {
+      marketTrail: candles.map((c) => ({
+        timestamp: Number(c.timestamp),
+        open: Number(c.open),
+        high: Number(c.high),
+        low: Number(c.low),
+        close: Number(c.close),
+        volume: Number(c.volume),
+      })),
+      paperTrail: paperTrades.map((t) => ({
+        kind: t.kind.toLowerCase() === "sell" ? "sell" : "buy",
+        timestamp: Number(t.timestamp),
+        price: Number(t.price),
+      })),
+    };
+  }
+
+  async handleTickReport(botId: string, payload: TradingBotTickPayload): Promise<void> {
     const row = await this.prisma.tradingBot.findUnique({ where: { id: botId } });
     if (row === null) {
       return;
     }
-    await this.prisma.tradingBot.update({
-      where: { id: botId },
-      data: {
-        lastTickAt: new Date(),
-        lastOutput: payload as Prisma.InputJsonValue,
-        lastError: null,
-        status: TradingBotStatus.RUNNING,
-      },
-    });
+    const candleTrail = this.extractCandles(payload);
+    const paperTrail = this.extractPaperEvents(payload);
+    const { candles: _candles, ...lastOutput } = payload;
+
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        await tx.tradingBot.update({
+          where: { id: botId },
+          data: {
+            lastTickAt: new Date(),
+            lastOutput: lastOutput as Prisma.InputJsonValue,
+            lastError: null,
+            status: TradingBotStatus.RUNNING,
+          },
+        });
+
+        if (candleTrail.length > 0) {
+          await tx.tradingBotCandle.createMany({
+            data: candleTrail.map((c) => ({
+              botId,
+              timestamp: BigInt(Math.round(c.timestamp)),
+              open: new Prisma.Decimal(c.open),
+              high: new Prisma.Decimal(c.high),
+              low: new Prisma.Decimal(c.low),
+              close: new Prisma.Decimal(c.close),
+              volume: new Prisma.Decimal(c.volume),
+            })),
+            skipDuplicates: true,
+          });
+        }
+
+        if (paperTrail.length > 0) {
+          await tx.tradingBotPaperTrade.createMany({
+            data: paperTrail.map((t) => ({
+              botId,
+              kind: t.kind,
+              timestamp: BigInt(Math.round(t.timestamp)),
+              price: new Prisma.Decimal(t.price),
+            })),
+          });
+        }
+      });
+
+      await Promise.all([this.pruneMarketTrail(botId), this.prunePaperTrail(botId)]);
+    } catch (error) {
+      if (!this.isMissingTrailTablesError(error)) {
+        throw error;
+      }
+
+      await this.prisma.tradingBot.update({
+        where: { id: botId },
+        data: {
+          lastTickAt: new Date(),
+          lastOutput: lastOutput as Prisma.InputJsonValue,
+          lastError: null,
+          status: TradingBotStatus.RUNNING,
+        },
+      });
+    }
   }
 }

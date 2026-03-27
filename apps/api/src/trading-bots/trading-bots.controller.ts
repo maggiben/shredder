@@ -27,6 +27,11 @@ export class TradingBotsController {
     return this.bots.logsForUser(req.user.userId, id);
   }
 
+  @Get(":id/trails")
+  trails(@Req() req: AuthedRequest, @Param("id") id: string) {
+    return this.bots.trailsForUser(req.user.userId, id);
+  }
+
   @Get(":id")
   getOne(@Req() req: AuthedRequest, @Param("id") id: string) {
     return this.bots.getForUser(req.user.userId, id);

@@ -6,11 +6,14 @@ import {
   createTradingBot,
   deleteTradingBot,
   ApiError,
+  getTradingBotTrails,
   KLINE_INTERVAL_OPTIONS,
   listTradingBots,
   startTradingBot,
   stopTradingBot,
+  type TradingBotPaperTrade,
   type TradingBotRow,
+  type TradingBotWorkerCandle,
 } from "../../../lib/api";
 import { BotCandlestickChart } from "../../../components/bot-candlestick-chart";
 import { accessTokenAtom, bannerAtom } from "../../../state/dashboard-atoms";
@@ -429,6 +432,30 @@ export default function TradingBotsPage() {
 
 function BotDetail({ bot, token }: { bot: TradingBotRow; token: string }) {
   const last = bot.lastOutput;
+  const [marketTrail, setMarketTrail] = useState<TradingBotWorkerCandle[]>([]);
+  const [paperTrail, setPaperTrail] = useState<TradingBotPaperTrade[]>([]);
+  const [trailsError, setTrailsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const pullTrails = async () => {
+      try {
+        const trails = await getTradingBotTrails(token, bot.id);
+        if (cancelled) return;
+        setMarketTrail(trails.marketTrail);
+        setPaperTrail(trails.paperTrail);
+        setTrailsError(null);
+      } catch (e) {
+        if (cancelled) return;
+        setTrailsError(formatError(e));
+      }
+    };
+    void pullTrails();
+    return () => {
+      cancelled = true;
+    };
+  }, [token, bot.id, bot.lastTickAt]);
+
   return (
     <div className="mt-4 space-y-4 border-t border-zinc-800 pt-4 text-xs">
       <BotCandlestickChart
@@ -436,8 +463,11 @@ function BotDetail({ bot, token }: { bot: TradingBotRow; token: string }) {
         symbol={bot.config.symbol}
         candleInterval={bot.config.candleInterval}
         candleLimit={bot.config.candleLimit}
-        lastOutput={last}
+        marketTrail={marketTrail}
+        paperTrail={paperTrail}
+        lastTickAt={bot.lastTickAt}
       />
+      {trailsError ? <p className="text-[11px] text-red-300/90">Could not load trails: {trailsError}</p> : null}
       <div>
         <p className="text-zinc-500">Config</p>
         <pre className="mt-1 overflow-x-auto rounded-lg border border-zinc-800/80 bg-zinc-950/80 p-3 text-zinc-300">

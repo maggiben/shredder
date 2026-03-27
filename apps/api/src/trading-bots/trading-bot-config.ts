@@ -1,5 +1,6 @@
 import type { CreateTradingBotDto } from "./dto/create-trading-bot.dto";
 import type { UpdateTradingBotDto } from "./dto/update-trading-bot.dto";
+import type { Prisma } from "@shredder/db";
 
 export type TradingBotConfigJson = {
   readonly symbol: string;
@@ -84,11 +85,11 @@ export function applyTradingBotConfigPatch(
   return coerceTradingBotConfig(input);
 }
 
-export function parseTradingBotConfig(raw: unknown): TradingBotConfigJson {
-  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) {
+export function parseTradingBotConfig(raw: Prisma.JsonValue): TradingBotConfigJson {
+  if (raw === null || Array.isArray(raw) || typeof raw !== "object") {
     throw new Error("Invalid bot config in database");
   }
-  const o = raw as Record<string, unknown>;
+  const o = raw as Prisma.JsonObject;
   const input: CoerceInput = {};
   if (typeof o["symbol"] === "string") {
     input.symbol = o["symbol"];
@@ -128,7 +129,14 @@ export function parseTradingBotConfig(raw: unknown): TradingBotConfigJson {
     input.estimatedTakerFeeRate = o["estimatedTakerFeeRate"];
   }
   if (o["extraEnv"] !== null && typeof o["extraEnv"] === "object" && !Array.isArray(o["extraEnv"])) {
-    input.extraEnv = o["extraEnv"] as Record<string, string>;
+    const extraEnvObject = o["extraEnv"] as Prisma.JsonObject;
+    const parsedExtraEnv: Record<string, string> = {};
+    for (const [key, value] of Object.entries(extraEnvObject)) {
+      if (typeof value === "string") {
+        parsedExtraEnv[key] = value;
+      }
+    }
+    input.extraEnv = parsedExtraEnv;
   }
   return coerceTradingBotConfig(input);
 }

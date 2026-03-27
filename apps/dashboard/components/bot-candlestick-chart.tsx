@@ -18,6 +18,8 @@ import {
   KLINE_INTERVAL_OPTIONS,
   getKlines,
   type KlineInterval,
+  type TradingBotPaperTrade,
+  type TradingBotWorkerCandle,
 } from "../lib/api";
 
 export type BotCandleRow = {
@@ -32,7 +34,7 @@ export type BotCandleRow = {
 
 type BotPaperTradeMarker = {
   id: string;
-  kind: "entry" | "exit";
+  kind: "buy" | "sell";
   idx: number;
   price: number;
 };
@@ -41,63 +43,81 @@ function isKlineInterval(s: string): s is KlineInterval {
   return (KLINE_INTERVAL_OPTIONS as readonly string[]).includes(s);
 }
 
-function parseCandleRows(raw: unknown): BotCandleRow[] | null {
-  if (!Array.isArray(raw) || raw.length === 0) return null;
+/** Matches worker `candleStepMs` so refresh cadence tracks the bot interval. */
+function candleStepMs(interval: string): number {
+  const trimmed = interval.trim().toLowerCase();
+  const m = /^(\d+)(m|h|d)$/.exec(trimmed);
+  if (!m) {
+    return 60 * 60 * 1000;
+  }
+  const n = Number(m[1]);
+  if (!Number.isFinite(n) || n <= 0) {
+    return 60 * 60 * 1000;
+  }
+  const unit = m[2];
+  if (unit === "m") {
+    return n * 60 * 1000;
+  }
+  if (unit === "h") {
+    return n * 60 * 60 * 1000;
+  }
+  return n * 24 * 60 * 60 * 1000;
+}
+
+function parseCandleRows(raw: TradingBotWorkerCandle[] | null | undefined): BotCandleRow[] | null {
+  if (!raw || raw.length === 0) return null;
   const out: BotCandleRow[] = [];
   for (let i = 0; i < raw.length; i += 1) {
-    const row = raw[i];
-    if (row === null || typeof row !== "object") return null;
-    const o = row as Record<string, unknown>;
-    const ts = typeof o.timestamp === "number" ? o.timestamp : Number(o.timestamp);
-    const open = typeof o.open === "number" ? o.open : Number(o.open);
-    const high = typeof o.high === "number" ? o.high : Number(o.high);
-    const low = typeof o.low === "number" ? o.low : Number(o.low);
-    const close = typeof o.close === "number" ? o.close : Number(o.close);
-    const volume =
-      o.volume === undefined
-        ? 0
-        : typeof o.volume === "number"
-          ? o.volume
-          : Number(o.volume);
+    const row = raw[i]!;
     if (
-      !Number.isFinite(ts) ||
-      !Number.isFinite(open) ||
-      !Number.isFinite(high) ||
-      !Number.isFinite(low) ||
-      !Number.isFinite(close)
+      !Number.isFinite(row.timestamp) ||
+      !Number.isFinite(row.open) ||
+      !Number.isFinite(row.high) ||
+      !Number.isFinite(row.low) ||
+      !Number.isFinite(row.close) ||
+      !Number.isFinite(row.volume)
     ) {
       return null;
     }
-    out.push({ idx: out.length, t: ts, open, high, low, close, volume });
+    out.push({
+      idx: out.length,
+      t: row.timestamp,
+      open: row.open,
+      high: row.high,
+      low: row.low,
+      close: row.close,
+      volume: row.volume,
+    });
   }
   return out;
 }
 
-function parsePaperTrades(raw: unknown): { kind: "entry" | "exit"; timestamp: number; price: number }[] {
-  if (!Array.isArray(raw)) return [];
-  const out: { kind: "entry" | "exit"; timestamp: number; price: number }[] = [];
-  for (const row of raw) {
-    if (row === null || typeof row !== "object") continue;
-    const o = row as Record<string, unknown>;
-    const kind = o.kind === "exit" ? "exit" : o.kind === "entry" ? "entry" : null;
-    const ts = typeof o.timestamp === "number" ? o.timestamp : Number(o.timestamp);
-    const price = typeof o.price === "number" ? o.price : Number(o.price);
-    if (kind === null || !Number.isFinite(ts) || !Number.isFinite(price)) continue;
-    out.push({ kind, timestamp: ts, price });
-  }
-  return out;
+function parsePaperTrades(raw: TradingBotPaperTrade[] | null | undefined): TradingBotPaperTrade[] {
+  if (!raw || raw.length === 0) return [];
+  return raw.filter(
+    (row) =>
+      (row.kind === "buy" || row.kind === "sell") &&
+      Number.isFinite(row.timestamp) &&
+      Number.isFinite(row.price),
+  );
 }
 
 function markersForRows(
   rows: BotCandleRow[],
-  trades: { kind: "entry" | "exit"; timestamp: number; price: number }[],
+  trades: TradingBotPaperTrade[],
 ): BotPaperTradeMarker[] {
   if (rows.length === 0 || trades.length === 0) return [];
-  const step =
-    rows.length >= 2 ? Math.max(1, Math.abs(rows[1]!.t - rows[0]!.t) * 1.5) : 60_000;
+  const barMs = rows.length >= 2 ? Math.abs(rows[1]!.t - rows[0]!.t) : 60_000;
+  const windowStart = rows[0]!.t;
+  const windowEnd = rows[rows.length - 1]!.t;
+  /** Keep markers bound to the rendered live window and avoid long-distance snapping. */
+  const maxDelta = Math.max(Math.floor(barMs * 1.5), 60_000);
   const markers: BotPaperTradeMarker[] = [];
   for (let i = 0; i < trades.length; i += 1) {
     const tr = trades[i]!;
+    if (tr.timestamp < windowStart - maxDelta || tr.timestamp > windowEnd + maxDelta) {
+      continue;
+    }
     let bestIdx = 0;
     let bestDelta = Infinity;
     for (let j = 0; j < rows.length; j += 1) {
@@ -107,7 +127,7 @@ function markersForRows(
         bestIdx = j;
       }
     }
-    if (bestDelta > step) continue;
+    if (bestDelta > maxDelta) continue;
     markers.push({
       id: `${tr.kind}-${tr.timestamp}-${i}`,
       kind: tr.kind,
@@ -201,46 +221,50 @@ export function BotCandlestickChart(props: {
   symbol: string;
   candleInterval: string;
   candleLimit: number;
-  lastOutput: Record<string, unknown> | null;
+  marketTrail: TradingBotWorkerCandle[];
+  paperTrail: TradingBotPaperTrade[];
+  /** When set, klines fallback refetches on new ticks and on a cadence derived from `candleInterval`. */
+  lastTickAt: string | null;
 }) {
-  const { token, symbol, candleInterval, candleLimit, lastOutput } = props;
+  const { token, symbol, candleInterval, candleLimit, marketTrail, paperTrail, lastTickAt } = props;
   const [fallbackRows, setFallbackRows] = useState<BotCandleRow[] | null>(null);
   const [fallbackErr, setFallbackErr] = useState<string | null>(null);
 
-  const fromWebhook = useMemo(() => {
-    if (!lastOutput) return null;
-    return parseCandleRows(lastOutput["candles"]);
-  }, [lastOutput]);
+  const fromApiTrail = useMemo(() => parseCandleRows(marketTrail), [marketTrail]);
 
   const intervalError =
-    fromWebhook === null && !isKlineInterval(candleInterval)
+    fromApiTrail === null && !isKlineInterval(candleInterval)
       ? `Interval ${candleInterval} is not supported for API klines fallback.`
       : null;
 
-  const klinesFallbackOk = fromWebhook === null && intervalError === null;
+  const klinesFallbackOk = fromApiTrail === null && intervalError === null;
 
-  const paperTrades = useMemo(() => {
-    if (!lastOutput) return [];
-    return parsePaperTrades(lastOutput["paperTrades"]);
-  }, [lastOutput]);
+  const paperTrades = useMemo(() => parsePaperTrades(paperTrail), [paperTrail]);
 
-  const rows = fromWebhook ?? (klinesFallbackOk ? fallbackRows : null);
+  const rows = fromApiTrail ?? (klinesFallbackOk ? fallbackRows : null);
   const markers = useMemo(() => (rows ? markersForRows(rows, paperTrades) : []), [rows, paperTrades]);
 
   const yDomain = useMemo(() => {
     if (!rows || rows.length === 0) return [0, 1] as [number, number];
-    const hi = Math.max(...rows.map((r) => r.high));
-    const lo = Math.min(...rows.map((r) => r.low));
+    let hi = Math.max(...rows.map((r) => r.high));
+    let lo = Math.min(...rows.map((r) => r.low));
+    /** Include worker paper prices so Y scale matches when klines differ slightly from webhook/feed data. */
+    for (const t of paperTrades) {
+      if (Number.isFinite(t.price)) {
+        hi = Math.max(hi, t.price);
+        lo = Math.min(lo, t.price);
+      }
+    }
     const pad = (hi - lo) * 0.06 || Math.abs(hi) * 0.001 || 0.01;
     return [lo - pad, hi + pad] as [number, number];
-  }, [rows]);
+  }, [rows, paperTrades]);
 
   useEffect(() => {
     if (!klinesFallbackOk) {
       return;
     }
     let cancelled = false;
-    void (async () => {
+    const pull = async () => {
       const interval = candleInterval as KlineInterval;
       try {
         const res = await getKlines(token, {
@@ -266,15 +290,20 @@ export function BotCandlestickChart(props: {
         setFallbackErr(e instanceof Error ? e.message : "Could not load klines");
         setFallbackRows(null);
       }
-    })();
+    };
+    void pull();
+    const step = candleStepMs(candleInterval);
+    const refreshMs = Math.min(180_000, Math.max(5_000, Math.floor(step / 2)));
+    const timer = window.setInterval(() => void pull(), refreshMs);
     return () => {
       cancelled = true;
+      window.clearInterval(timer);
     };
-  }, [token, symbol, candleInterval, candleLimit, klinesFallbackOk]);
+  }, [token, symbol, candleInterval, candleLimit, klinesFallbackOk, lastTickAt]);
 
   if (!rows || rows.length === 0) {
     const idleMsg =
-      fromWebhook === null && klinesFallbackOk ? "Loading klines…" : "Waiting for market window…";
+      fromApiTrail === null && klinesFallbackOk ? "Loading klines…" : "Waiting for market window…";
     return (
       <div className="rounded-lg border border-zinc-800 bg-zinc-950/40 p-4 text-xs text-zinc-500">
         {intervalError ?? fallbackErr ?? idleMsg}
@@ -287,12 +316,12 @@ export function BotCandlestickChart(props: {
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="text-xs font-medium text-zinc-300">Live market window</p>
         <p className="text-[10px] text-zinc-500">
-          <span className="text-emerald-400">△</span> entry{" "}
-          <span className="text-rose-400">▽</span> exit · paper signals from worker
+          <span className="text-emerald-400">△</span> buy{" "}
+          <span className="text-rose-400">▽</span> sell · paper signals from worker
         </p>
       </div>
       <p className="mt-0.5 text-[10px] text-zinc-600">
-        {fromWebhook ? "Bars from last tick webhook" : "Bars from API klines (webhook had no candles)"}
+        {fromApiTrail ? "Bars from persisted bot market trail" : "Bars from API klines (trail not available yet)"}
       </p>
       <div className="mt-2 h-[340px] w-full min-w-0">
         <ResponsiveContainer width="100%" height="100%">
@@ -301,7 +330,7 @@ export function BotCandlestickChart(props: {
             <XAxis
               type="category"
               dataKey="idx"
-              tickFormatter={(i) => {
+              tickFormatter={(i: number | string) => {
                 const idx = Number(i);
                 const t = rows[idx]?.t;
                 if (t === undefined) return "";
@@ -337,15 +366,16 @@ export function BotCandlestickChart(props: {
                 x={m.idx}
                 y={m.price}
                 r={6}
+                ifOverflow="visible"
                 fill="transparent"
                 stroke="transparent"
-                shape={(dotProps) => {
+                shape={(dotProps: { cx?: number; cy?: number }) => {
                   const cx = dotProps.cx;
                   const cy = dotProps.cy;
                   if (cx == null || cy == null) {
                     return <g />;
                   }
-                  if (m.kind === "entry") {
+                  if (m.kind === "buy") {
                     return (
                       <polygon
                         points={`${cx},${cy - 7} ${cx - 6},${cy + 4} ${cx + 6},${cy + 4}`}

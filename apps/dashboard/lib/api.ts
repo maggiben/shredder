@@ -2,11 +2,19 @@ import { getApiBaseUrl } from "./config";
 import type { OrderRow, PortfolioSnapshot, StrategyRow, TradeRow } from "./api-types";
 import type { SimulationLedgerRow, SimulationMetrics, SimulationSignalStats } from "@shredder/backtest";
 
+export type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: JsonValue }
+  | JsonValue[];
+
 export class ApiError extends Error {
   status: number;
-  body: unknown;
+  body: JsonValue | string;
 
-  constructor(message: string, status: number, body: unknown) {
+  constructor(message: string, status: number, body: JsonValue | string) {
     super(message);
     this.name = "ApiError";
     this.status = status;
@@ -17,7 +25,7 @@ export class ApiError extends Error {
 type ApiFetchOptions = {
   method?: "GET" | "POST" | "PATCH" | "DELETE";
   token?: string | null;
-  body?: unknown;
+  body?: JsonValue;
   signal?: AbortSignal;
   headers?: Record<string, string>;
 };
@@ -47,7 +55,7 @@ async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): Promise
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    let parsed: unknown = text;
+    let parsed: JsonValue | string = text;
     try {
       parsed = text ? JSON.parse(text) : null;
     } catch {
@@ -230,7 +238,7 @@ export async function runSimulation(token: string, body: SimulationBody): Promis
 export type IndicatorParamMeta = {
   name: string;
   type?: string;
-  default?: unknown;
+  default?: JsonValue;
   description?: string;
 };
 
@@ -255,7 +263,7 @@ export type IndicatorComputeBody = {
   limit?: number;
   startTime?: number;
   endTime?: number;
-  params?: Record<string, unknown>;
+  params?: Record<string, JsonValue>;
 };
 
 export type IndicatorComputeResponse = {
@@ -264,7 +272,7 @@ export type IndicatorComputeResponse = {
   interval: string;
   indicatorId: string;
   candleCount: number;
-  result: unknown;
+  result: JsonValue;
 };
 
 export async function computeIndicator(token: string, body: IndicatorComputeBody): Promise<IndicatorComputeResponse> {
@@ -272,6 +280,43 @@ export async function computeIndicator(token: string, body: IndicatorComputeBody
 }
 
 export type TradingBotStatus = "STOPPED" | "STARTING" | "RUNNING" | "ERROR";
+
+export type TradingBotWorkerCandle = {
+  timestamp: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+};
+
+export type TradingBotPaperTrade = {
+  kind: "buy" | "sell";
+  timestamp: number;
+  price: number;
+};
+
+/**
+ * Worker tick payload persisted by API as `lastOutput`.
+ * API stores webhook `payload` directly, so this mirrors `apps/worker/src/index.ts`.
+ */
+export type TradingBotLastOutput = {
+  t?: string;
+  botId?: string;
+  exchangeId?: string;
+  paperTrading?: boolean;
+  symbol?: string;
+  candleCount?: number;
+  marketDataProvider?: string;
+  candleInterval?: string;
+  candleLimit?: number;
+  aggregated?: JsonValue;
+  risk?: JsonValue;
+  strategies?: JsonValue[];
+  ai?: JsonValue;
+  demoScenario?: string;
+  paperTradeEvent?: TradingBotPaperTrade;
+};
 
 export type TradingBotConfig = {
   symbol: string;
@@ -295,11 +340,16 @@ export type TradingBotRow = {
   config: TradingBotConfig;
   processPid: number | null;
   lastTickAt: string | null;
-  lastOutput: Record<string, unknown> | null;
+  lastOutput: TradingBotLastOutput | null;
   lastError: string | null;
   createdAt: string;
   updatedAt: string;
   runtime: { alive: boolean; logTail: string[] };
+};
+
+export type TradingBotTrails = {
+  marketTrail: TradingBotWorkerCandle[];
+  paperTrail: TradingBotPaperTrade[];
 };
 
 export type CreateTradingBotBody = {
@@ -340,5 +390,9 @@ export async function deleteTradingBot(token: string, id: string): Promise<{ ok:
 
 export async function getTradingBotLogs(token: string, id: string): Promise<{ lines: string[] }> {
   return apiFetch(`/trading-bots/${id}/logs`, { token });
+}
+
+export async function getTradingBotTrails(token: string, id: string): Promise<TradingBotTrails> {
+  return apiFetch(`/trading-bots/${id}/trails`, { token });
 }
 

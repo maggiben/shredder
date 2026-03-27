@@ -41,10 +41,42 @@ model TradingBot {
   lastError   String?           @map("last_error")
   createdAt   DateTime          @default(now()) @map("created_at")
   updatedAt   DateTime          @updatedAt @map("updated_at")
+  marketTrail TradingBotCandle[]
+  paperTrail  TradingBotPaperTrade[]
 
   @@index([userId])
   @@index([status])
   @@map("trading_bots")
+}
+
+model TradingBotCandle {
+  id        String     @id @default(cuid())
+  botId     String     @map("bot_id")
+  bot       TradingBot @relation(fields: [botId], references: [id], onDelete: Cascade)
+  timestamp BigInt
+  open      Decimal    @db.Decimal(28, 12)
+  high      Decimal    @db.Decimal(28, 12)
+  low       Decimal    @db.Decimal(28, 12)
+  close     Decimal    @db.Decimal(28, 12)
+  volume    Decimal    @db.Decimal(28, 12)
+  createdAt DateTime   @default(now()) @map("created_at")
+
+  @@unique([botId, timestamp])
+  @@index([botId, timestamp(sort: Desc)])
+  @@map("trading_bot_candles")
+}
+
+model TradingBotPaperTrade {
+  id        String     @id @default(cuid())
+  botId     String     @map("bot_id")
+  bot       TradingBot @relation(fields: [botId], references: [id], onDelete: Cascade)
+  kind      String
+  timestamp BigInt
+  price     Decimal    @db.Decimal(28, 12)
+  createdAt DateTime   @default(now()) @map("created_at")
+
+  @@index([botId, timestamp(sort: Desc)])
+  @@map("trading_bot_paper_trades")
 }
 
 model Order {

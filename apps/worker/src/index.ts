@@ -33,13 +33,40 @@ function envFlag(key: string): boolean {
   return v === "1" || v === "true" || v === "yes";
 }
 
-const MAX_PAPER_TRADE_EVENTS = 120;
+/** Aggregated signal markers for the dashboard chart (not exchange execution). */
+type PaperTradeEvent = { kind: "buy" | "sell"; timestamp: number; price: number };
+type WorkerTickCandle = {
+  timestamp: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+};
+type WorkerTickPayload = {
+  t: string;
+  botId?: string;
+  exchangeId: string;
+  paperTrading: boolean;
+  symbol: string;
+  candleCount: number;
+  aggregated: ReturnType<typeof aggregateSignals>;
+  risk: ReturnType<DefaultRiskEngine["evaluate"]>;
+  marketDataProvider: string;
+  candleInterval: string;
+  candleLimit: number;
+  candles: WorkerTickCandle[];
+  paperTradeEvent?: PaperTradeEvent;
+  strategies?: Array<{ id: string; action: string; confidence: number; reason: string }>;
+  ai?: { analyst?: string; skipped?: string };
+  demoScenario?: string;
+};
+type WorkerTickLogPayload = Omit<WorkerTickPayload, "candles"> & {
+  candles?: undefined;
+  lastCandle?: { timestamp: number; close: number };
+};
 
-/** Rolling paper position for dashboard entry/exit markers (not exchange execution). */
-type PaperTradeEvent = { kind: "entry" | "exit"; timestamp: number; price: number };
-
-let paperPosition: "flat" | "long" = "flat";
-let paperTradeHistory: PaperTradeEvent[] = [];
+let prevAggregatedAction: "BUY" | "SELL" | "HOLD" | undefined;
 
 /** When unset, defaults to paper mode for safety. Set `WORKER_PAPER_TRADING=0` to mark live intent. */
 function paperTradingFromEnv(): boolean {
@@ -74,7 +101,7 @@ function getOpenAI(): ReturnType<typeof createOpenAIClient> | undefined {
   return openaiClient;
 }
 
-async function emitTickWebhook(payload: Record<string, unknown>): Promise<void> {
+async function emitTickWebhook(payload: WorkerTickPayload): Promise<void> {
   if (!workerWebhookUrl || !workerBotId) {
     return;
   }
@@ -259,23 +286,23 @@ async function tick(): Promise<void> {
   });
 
   const lastBar = window.at(-1);
-  if (lastBar !== undefined) {
-    const canEnter = agg.action === "BUY" && decision.allow && paperPosition === "flat";
-    const canExit = agg.action === "SELL" && paperPosition === "long";
-    if (canEnter) {
-      paperPosition = "long";
-      const ev: PaperTradeEvent = { kind: "entry", timestamp: lastBar.timestamp, price: lastBar.close };
-      paperTradeHistory = [...paperTradeHistory, ev].slice(-MAX_PAPER_TRADE_EVENTS);
-    } else if (canExit) {
-      paperPosition = "flat";
-      const ev: PaperTradeEvent = { kind: "exit", timestamp: lastBar.timestamp, price: lastBar.close };
-      paperTradeHistory = [...paperTradeHistory, ev].slice(-MAX_PAPER_TRADE_EVENTS);
+  let paperTradeEvent: PaperTradeEvent | undefined;
+  if (paperTrading && lastBar !== undefined && (agg.action === "BUY" || agg.action === "SELL")) {
+    const edgeBuy = agg.action === "BUY" && prevAggregatedAction !== "BUY";
+    const edgeSell = agg.action === "SELL" && prevAggregatedAction !== "SELL";
+    if (edgeBuy || edgeSell) {
+      paperTradeEvent = {
+        kind: edgeBuy ? "buy" : "sell",
+        timestamp: lastBar.timestamp,
+        price: lastBar.close,
+      };
     }
   }
+  prevAggregatedAction = agg.action;
 
-  const payload: Record<string, unknown> = {
+  const webhookPayload: WorkerTickPayload = {
     t: new Date().toISOString(),
-    botId: workerBotId || undefined,
+    ...(workerBotId !== "" ? { botId: workerBotId } : {}),
     exchangeId: workerExchangeId,
     paperTrading,
     symbol,
@@ -293,27 +320,42 @@ async function tick(): Promise<void> {
       close: c.close,
       volume: c.volume,
     })),
-    paperTrades: paperTradeHistory,
+    ...(paperTradeEvent !== undefined ? { paperTradeEvent } : {}),
   };
   if (workerLogStrategies) {
-    payload["strategies"] = perStrategy.map((p) => ({
+    webhookPayload.strategies = perStrategy.map((p) => ({
       id: p.strategyId,
-      ...p.signal,
+      action: p.signal.action,
+      confidence: p.signal.confidence,
+      reason: p.signal.reason,
     }));
   }
   if (ai !== undefined) {
-    payload["ai"] = ai;
+    webhookPayload.ai = ai;
   }
   if (demoScenario !== undefined) {
-    payload["demoScenario"] = demoScenario;
+    webhookPayload.demoScenario = demoScenario;
   }
+  const logPayload: WorkerTickLogPayload = {
+    ...webhookPayload,
+    // Keep stdout compact; full trail goes over webhook for DB persistence.
+    candles: undefined,
+    ...(lastBar !== undefined
+      ? {
+          lastCandle: {
+            timestamp: lastBar.timestamp,
+            close: lastBar.close,
+          },
+        }
+      : {}),
+  };
   // eslint-disable-next-line no-console
-  console.log(JSON.stringify(payload));
-  void emitTickWebhook(payload);
+  console.log(JSON.stringify(logPayload));
+  void emitTickWebhook(webhookPayload);
 }
 
 setInterval(() => {
-  void tick().catch((err: unknown) => {
+  void tick().catch((err: Error) => {
     console.error(err);
   });
 }, intervalMs);

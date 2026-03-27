@@ -1,6 +1,5 @@
 import type { Candle } from "@shredder/core";
 import type { MarketDataSource } from "./types.js";
-import { bucketChartToCandles } from "./bucket-chart.js";
 import { parseIntervalToMs } from "./interval-ms.js";
 import { SlidingWindowRateLimiter } from "./rate-limiter.js";
 import { DEFAULT_COINGECKO_SYMBOL_MAP } from "./symbol-map.js";
@@ -25,10 +24,7 @@ export interface CoinGeckoMarketDataSourceConfig {
   readonly fetchFn?: (input: string | URL, init?: RequestInit) => Promise<Response>;
 }
 
-interface MarketChartJson {
-  readonly prices?: unknown;
-  readonly total_volumes?: unknown;
-}
+interface OhlcJson extends Array<[number, number, number, number, number]> {}
 
 function isPair(x: unknown): x is [number, number] {
   return (
@@ -39,14 +35,26 @@ function isPair(x: unknown): x is [number, number] {
   );
 }
 
-function asPairArray(raw: unknown, label: string): [number, number][] {
+function isOhlcRow(x: unknown): x is [number, number, number, number, number] {
+  return (
+    Array.isArray(x) &&
+    x.length === 5 &&
+    typeof x[0] === "number" &&
+    typeof x[1] === "number" &&
+    typeof x[2] === "number" &&
+    typeof x[3] === "number" &&
+    typeof x[4] === "number"
+  );
+}
+
+function asOhlcArray(raw: unknown): OhlcJson {
   if (!Array.isArray(raw)) {
-    throw new Error(`CoinGecko response: expected array for ${label}`);
+    throw new Error("CoinGecko response: expected array for ohlc");
   }
-  const out: [number, number][] = [];
+  const out: OhlcJson = [];
   for (const row of raw) {
-    if (!isPair(row)) {
-      throw new Error(`CoinGecko response: invalid ${label} row`);
+    if (!isOhlcRow(row)) {
+      throw new Error("CoinGecko response: invalid ohlc row");
     }
     out.push(row);
   }
@@ -106,12 +114,12 @@ export function createCoinGeckoMarketDataSource(
     config.rateLimit.minIntervalMs,
   );
 
-  async function fetchChart(
+  async function fetchOhlc(
     coinId: string,
     days: number,
     attempt: number,
-  ): Promise<MarketChartJson> {
-    const url = new URL(`${baseUrl}/coins/${encodeURIComponent(coinId)}/market_chart`);
+  ): Promise<OhlcJson> {
+    const url = new URL(`${baseUrl}/coins/${encodeURIComponent(coinId)}/ohlc`);
     url.searchParams.set("vs_currency", config.vsCurrency);
     url.searchParams.set("days", String(days));
 
@@ -127,13 +135,13 @@ export function createCoinGeckoMarketDataSource(
     if (res.status === 429 && attempt < 3) {
       const ra = parseRetryAfterMs(res.headers.get("retry-after"));
       await new Promise((r) => setTimeout(r, ra ?? 2000 * (attempt + 1)));
-      return fetchChart(coinId, days, attempt + 1);
+      return fetchOhlc(coinId, days, attempt + 1);
     }
     if (!res.ok) {
       const body = await res.text().catch(() => "");
       throw new Error(`CoinGecko HTTP ${res.status} for ${url.pathname}: ${body.slice(0, 200)}`);
     }
-    return (await res.json()) as MarketChartJson;
+    return asOhlcArray((await res.json()) as unknown);
   }
 
   return {
@@ -142,10 +150,27 @@ export function createCoinGeckoMarketDataSource(
         const coinId = resolveCoinId(symbol, config.symbolToCoinId);
         const intervalMs = parseIntervalToMs(interval);
         const days = chartDaysForSpan(intervalMs, limit, config.maxChartDays);
-        const json = await fetchChart(coinId, days, 0);
-        const prices = asPairArray(json.prices, "prices");
-        const volumes = asPairArray(json.total_volumes ?? [], "total_volumes");
-        return bucketChartToCandles(prices, volumes, intervalMs, limit);
+        const ohlc = await fetchOhlc(coinId, days, 0);
+        if (ohlc.length === 0) {
+          return [];
+        }
+        // CoinGecko OHLC does not include volume; keep zeroed volume in this provider.
+        // This preserves true OHLC while avoiding synthetic bars with identical O/H/L/C.
+        const candles = ohlc
+          .map(([timestamp, open, high, low, close]) => ({
+            timestamp,
+            open,
+            high,
+            low,
+            close,
+            volume: 0,
+          }))
+          .filter((c) => Number.isFinite(c.timestamp))
+          .sort((a, b) => a.timestamp - b.timestamp);
+        if (candles.length <= limit) {
+          return candles;
+        }
+        return candles.slice(-limit);
       });
     },
   };
