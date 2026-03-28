@@ -34,7 +34,18 @@ function envFlag(key: string): boolean {
 }
 
 /** Aggregated signal markers for the dashboard chart (not exchange execution). */
-type PaperTradeEvent = { kind: "buy" | "sell"; timestamp: number; price: number };
+type PaperTradeEvent = {
+  kind: "buy" | "sell";
+  timestamp: number;
+  price: number;
+  quantity: number;
+  fee: number;
+  feeRate: number;
+  tradeValue: number;
+  cashAfter: number;
+  positionQtyAfter: number;
+  equityAfter: number;
+};
 type WorkerTickCandle = {
   timestamp: number;
   open: number;
@@ -67,6 +78,21 @@ type WorkerTickLogPayload = Omit<WorkerTickPayload, "candles"> & {
 };
 
 let prevAggregatedAction: "BUY" | "SELL" | "HOLD" | undefined;
+let paperCash = Number(process.env["WORKER_PAPER_INITIAL_CASH"] ?? "10000");
+if (!Number.isFinite(paperCash) || paperCash <= 0) {
+  paperCash = 10_000;
+}
+let paperPositionQty = 0;
+let paperPeakEquity = paperCash;
+let paperPrevTickTs: number | null = null;
+
+function resolveDeployFraction(): number {
+  const raw = Number(process.env["WORKER_PAPER_DEPLOY_FRACTION"] ?? "0.1");
+  if (!Number.isFinite(raw) || raw <= 0 || raw > 1) {
+    return 0.1;
+  }
+  return raw;
+}
 
 /** When unset, defaults to paper mode for safety. Set `WORKER_PAPER_TRADING=0` to mark live intent. */
 function paperTradingFromEnv(): boolean {
@@ -243,6 +269,7 @@ async function tick(): Promise<void> {
     signal: s.evaluate(input),
   }));
   const agg = aggregateSignals(perStrategy.map((p) => p.signal));
+  const lastBar = window.at(-1);
 
   let ai: { analyst?: string; skipped?: string } | undefined;
   if (workerAiAnalyst) {
@@ -271,12 +298,15 @@ async function tick(): Promise<void> {
     }
   }
 
-  const equity = portfolio.cash;
-  const peak = equity;
-  const proposed = equity * 0.1;
+  const deployFraction = resolveDeployFraction();
+  const equity = paperCash + paperPositionQty * (lastBar?.close ?? 0);
+  if (equity > paperPeakEquity) {
+    paperPeakEquity = equity;
+  }
+  const proposed = equity * deployFraction;
   const decision = risk.evaluate(agg.action, {
     equity,
-    peakEquity: peak,
+    peakEquity: paperPeakEquity,
     proposedBuyNotional: agg.action === "BUY" ? proposed : 0,
     ...(agg.action === "BUY"
       ? {
@@ -285,17 +315,59 @@ async function tick(): Promise<void> {
       : {}),
   });
 
-  const lastBar = window.at(-1);
   let paperTradeEvent: PaperTradeEvent | undefined;
   if (paperTrading && lastBar !== undefined && (agg.action === "BUY" || agg.action === "SELL")) {
     const edgeBuy = agg.action === "BUY" && prevAggregatedAction !== "BUY";
     const edgeSell = agg.action === "SELL" && prevAggregatedAction !== "SELL";
-    if (edgeBuy || edgeSell) {
-      paperTradeEvent = {
-        kind: edgeBuy ? "buy" : "sell",
-        timestamp: lastBar.timestamp,
-        price: lastBar.close,
-      };
+    const isNewBar = paperPrevTickTs === null || lastBar.timestamp > paperPrevTickTs;
+    if ((edgeBuy || edgeSell) && isNewBar) {
+      const feeRate = Number.isFinite(estimatedTakerFeeRate) ? estimatedTakerFeeRate : 0.001;
+      if (edgeBuy && paperPositionQty === 0 && decision.allow) {
+        const buyNotional = Math.max(0, proposed);
+        if (buyNotional > 0 && lastBar.close > 0) {
+          const fee = buyNotional * feeRate;
+          const quantity = buyNotional / lastBar.close;
+          paperCash -= buyNotional + fee;
+          paperPositionQty += quantity;
+          const equityAfter = paperCash + paperPositionQty * lastBar.close;
+          paperPeakEquity = Math.max(paperPeakEquity, equityAfter);
+          paperTradeEvent = {
+            kind: "buy",
+            timestamp: lastBar.timestamp,
+            price: lastBar.close,
+            quantity,
+            fee,
+            feeRate,
+            tradeValue: buyNotional,
+            cashAfter: paperCash,
+            positionQtyAfter: paperPositionQty,
+            equityAfter,
+          };
+        }
+      } else if (edgeSell && paperPositionQty > 0) {
+        const gross = paperPositionQty * lastBar.close;
+        const fee = gross * feeRate;
+        const quantity = paperPositionQty;
+        paperCash += gross - fee;
+        paperPositionQty = 0;
+        const equityAfter = paperCash;
+        paperPeakEquity = Math.max(paperPeakEquity, equityAfter);
+        paperTradeEvent = {
+          kind: "sell",
+          timestamp: lastBar.timestamp,
+          price: lastBar.close,
+          quantity,
+          fee,
+          feeRate,
+          tradeValue: gross,
+          cashAfter: paperCash,
+          positionQtyAfter: paperPositionQty,
+          equityAfter,
+        };
+      }
+    }
+    if (isNewBar) {
+      paperPrevTickTs = lastBar.timestamp;
     }
   }
   prevAggregatedAction = agg.action;

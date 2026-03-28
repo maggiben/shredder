@@ -11,6 +11,13 @@ export type TradingBotTickPaperEvent = {
   kind: "buy" | "sell";
   timestamp: number;
   price: number;
+  quantity: number;
+  fee: number;
+  feeRate: number;
+  tradeValue: number;
+  cashAfter: number;
+  positionQtyAfter: number;
+  equityAfter: number;
 };
 
 export type TradingBotTickPayload = {

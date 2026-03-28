@@ -28,8 +28,8 @@ import {
   KLINE_INTERVAL_OPTIONS,
   runSimulation,
   type KlineInterval,
-  type SimulationRunResponse,
 } from "../lib/api";
+import { ResultsPanel } from "./results-panel";
 
 const DEFAULT_STRATEGY_IDS = ["ma-crossover", "rsi-reversion", "macd-momentum"] as const;
 
@@ -279,15 +279,6 @@ function SimulationCharts({ rows }: { rows: SimulationLedgerRow[] }) {
   );
 }
 
-function MetricTile({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-lg border border-zinc-800/80 bg-zinc-950/40 px-3 py-2">
-      <p className="text-xs text-zinc-500">{label}</p>
-      <div className="mt-0.5 font-mono text-sm text-zinc-200">{children}</div>
-    </div>
-  );
-}
-
 function simulationGlobalFilter(row: { original: SimulationLedgerRow }, _columnId: string, filter: unknown): boolean {
   const q = String(filter ?? "")
     .trim()
@@ -341,7 +332,7 @@ export function SimulationPanel({ token }: { token: string }) {
   const [busy, setBusy] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
   const [rows, setRows] = useState<SimulationLedgerRow[]>([]);
-  const [simulationResult, setSimulationResult] = useState<SimulationRunResponse | null>(null);
+  const [simulationResult, setSimulationResult] = useState<Awaited<ReturnType<typeof runSimulation>> | null>(null);
 
   const [sorting, setSorting] = useState<SortingState>([{ id: "timestamp", desc: false }]);
   const [globalFilter, setGlobalFilter] = useState("");
@@ -715,151 +706,7 @@ export function SimulationPanel({ token }: { token: string }) {
       </section>
 
       {simulationResult ? (
-        <section className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-6 space-y-6">
-          <div>
-            <h3 className="text-md font-medium text-white">Results</h3>
-            <p className="mt-1 text-xs text-zinc-500">
-              <span className="font-mono text-zinc-400">
-                {simulationResult.symbol} · {simulationResult.interval}
-              </span>
-              {" · "}
-              {simulationResult.candleCount} candles · Binance{" "}
-              <span className="font-mono text-zinc-500">{simulationResult.baseUrl}</span>
-            </p>
-            <p className="mt-1 text-xs text-zinc-500">
-              Taker fee model:{" "}
-              <span className="font-mono text-zinc-300">
-                {(simulationResult.feeModel.takerFeeRate * 100).toFixed(4)}%
-              </span>{" "}
-              <span className="text-zinc-600">({simulationResult.feeModel.source})</span>
-            </p>
-          </div>
-
-          {(() => {
-            const m = simulationResult.metrics;
-            const sig = simulationResult.signalStats;
-            return (
-              <>
-                <div>
-                  <h4 className="text-sm font-medium text-zinc-300 mb-3">Period</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                    <MetricTile label="From (first bar after warmup)">
-                      {new Date(m.periodFrom).toLocaleString()}
-                    </MetricTile>
-                    <MetricTile label="To (last bar)">{new Date(m.periodTo).toLocaleString()}</MetricTile>
-                    <MetricTile label="Calendar days (span)">{m.calendarDaysInPeriod.toFixed(2)}</MetricTile>
-                    <MetricTile label="Market change % (buy &amp; hold, same window)">
-                      {fmtPct(m.marketChangePercent)}
-                    </MetricTile>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="text-sm font-medium text-zinc-300 mb-3">Balance &amp; return</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                    <MetricTile label="Starting balance">{fmtPlain(m.startingBalance)}</MetricTile>
-                    <MetricTile label="Final balance (mark to last close)">
-                      <span className="text-emerald-300/90">{fmtPlain(m.finalBalance)}</span>
-                    </MetricTile>
-                    <MetricTile label="Absolute profit">
-                      <span className={m.absoluteProfit >= 0 ? "text-emerald-400" : "text-rose-400"}>
-                        {fmtSigned(m.absoluteProfit)}
-                      </span>
-                    </MetricTile>
-                    <MetricTile label="Total profit %">{fmtPct(m.totalProfitPercent)}</MetricTile>
-                    <MetricTile label="CAGR %">{fmtPct(m.cagrPercent)}</MetricTile>
-                    <MetricTile label="Min balance">{fmtPlain(m.minBalance)}</MetricTile>
-                    <MetricTile label="Max balance">{fmtPlain(m.maxBalance)}</MetricTile>
-                    <MetricTile label="Avg daily profit % (calendar days)">{fmtPct(m.avgDailyProfitPercent)}</MetricTile>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="text-sm font-medium text-zinc-300 mb-3">Fees &amp; commissions</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                    <MetricTile label="Total fees paid (quote)">{fmtPlain(m.totalFeesPaid)}</MetricTile>
-                    <MetricTile label="Avg fee per leg (quote)">{fmtPlain(m.avgFeePerLeg)}</MetricTile>
-                    <MetricTile label="Avg effective fee (bps of volume)">
-                      {fmtPlain(m.avgEffectiveFeeRateBps, 4)}
-                    </MetricTile>
-                    <MetricTile label="Net profit ÷ fees (×)">
-                      {m.profitToFeesRatio === null ? "—" : fmtPlain(m.profitToFeesRatio, 4)}
-                    </MetricTile>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="text-sm font-medium text-zinc-300 mb-3">Trades &amp; activity</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                    <MetricTile label="Max open positions (concurrent)">{m.maxOpenTrades}</MetricTile>
-                    <MetricTile label="Peak position size (base qty)">{m.maxPositionQty.toFixed(6)}</MetricTile>
-                    <MetricTile label="Closed round trips">{m.closedTradeCount}</MetricTile>
-                    <MetricTile label="Executed legs (BUY+SELL)">{m.totalLegCount}</MetricTile>
-                    <MetricTile label="Avg trades / day (round trips)">{m.avgTradesPerDay.toFixed(4)}</MetricTile>
-                    <MetricTile label="Total trade volume (quote)">{fmtPlain(m.totalTradeVolume)}</MetricTile>
-                    <MetricTile label="Avg stake (avg position notional when long)">
-                      {fmtPlain(m.avgStakeNotional)}
-                    </MetricTile>
-                    <MetricTile label="Profit factor">{fmtMaybeNumber(m.profitFactor)}</MetricTile>
-                    <MetricTile label="Expectancy / trade (quote)">{fmtSigned(m.expectancy)}</MetricTile>
-                    <MetricTile label="Expectancy ratio (avg win ÷ avg loss)">
-                      {fmtMaybeNumber(m.expectancyRatio)}
-                    </MetricTile>
-                    <MetricTile label="Best trade (closed)">{fmtSigned(m.bestTrade)}</MetricTile>
-                    <MetricTile label="Worst trade (closed)">{fmtSigned(m.worstTrade)}</MetricTile>
-                    <MetricTile label="Avg duration — winners">{formatDurationMs(m.avgDurationWinnersMs)}</MetricTile>
-                    <MetricTile label="Avg duration — losers">{formatDurationMs(m.avgDurationLosersMs)}</MetricTile>
-                    <MetricTile label="Max consecutive wins">{m.maxConsecutiveWins}</MetricTile>
-                    <MetricTile label="Max consecutive losses">{m.maxConsecutiveLosses}</MetricTile>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="text-sm font-medium text-zinc-300 mb-3">Daily outcomes (UTC calendar days)</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                    <MetricTile label="Days win / draw / lose">
-                      {m.daysWin} / {m.daysDraw} / {m.daysLose}
-                    </MetricTile>
-                    <MetricTile label="Best day (quote P&amp;L)">{fmtSigned(m.bestDay)}</MetricTile>
-                    <MetricTile label="Worst day (quote P&amp;L)">{fmtSigned(m.worstDay)}</MetricTile>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="text-sm font-medium text-zinc-300 mb-3">Drawdown</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                    <MetricTile label="Max % underwater (from running peak)">
-                      {fmtPct(m.maxUnderwaterPercent)}
-                    </MetricTile>
-                    <MetricTile label="Absolute drawdown (quote, account equity)">{fmtPlain(m.absoluteDrawdown)}</MetricTile>
-                    <MetricTile label="Drawdown high (peak equity)">{fmtPlain(m.drawdownHigh)}</MetricTile>
-                    <MetricTile label="Drawdown low (trough equity)">{fmtPlain(m.drawdownLow)}</MetricTile>
-                    <MetricTile label="Drawdown start (peak time)">
-                      {new Date(m.drawdownStart).toLocaleString()}
-                    </MetricTile>
-                    <MetricTile label="Drawdown end (trough time)">
-                      {new Date(m.drawdownEnd).toLocaleString()}
-                    </MetricTile>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="text-sm font-medium text-zinc-300 mb-3">Signals &amp; timeouts</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                    <MetricTile label="Rejected / skipped entry signals (risk + already long)">
-                      {m.rejectedEntrySignals}
-                    </MetricTile>
-                    <MetricTile label="SELL signal while flat">{sig.sellSkippedFlat}</MetricTile>
-                    <MetricTile label="Entry timeouts (not modeled)">{sig.entryTimeouts}</MetricTile>
-                    <MetricTile label="Exit timeouts (not modeled)">{sig.exitTimeouts}</MetricTile>
-                    <MetricTile label="BUY blocked by risk">{sig.buyBlockedByRisk}</MetricTile>
-                    <MetricTile label="BUY skipped (already in position)">{sig.buySkippedInPosition}</MetricTile>
-                  </div>
-                </div>
-              </>
-            );
-          })()}
-        </section>
+        <ResultsPanel result={simulationResult} />
       ) : null}
 
       {rows.length > 0 ? <SimulationCharts rows={rows} /> : null}

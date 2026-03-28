@@ -11,11 +11,13 @@ import {
   listTradingBots,
   startTradingBot,
   stopTradingBot,
+  type KlineInterval,
   type TradingBotPaperTrade,
   type TradingBotRow,
   type TradingBotWorkerCandle,
 } from "../../../lib/api";
 import { BotCandlestickChart } from "../../../components/bot-candlestick-chart";
+import { ResultsPanel } from "../../../components/results-panel";
 import { accessTokenAtom, bannerAtom } from "../../../state/dashboard-atoms";
 
 function formatError(e: unknown): string {
@@ -26,6 +28,11 @@ function formatError(e: unknown): string {
 
 const MARKET_OPTIONS = ["demo", "coingecko", "binance"] as const;
 const EXCHANGE_OPTIONS = ["binance", "none"] as const;
+const DEFAULT_STRATEGY_IDS = ["ma-crossover", "rsi-reversion", "macd-momentum"] as const;
+
+function asKlineInterval(raw: string): KlineInterval | null {
+  return (KLINE_INTERVAL_OPTIONS as readonly string[]).includes(raw) ? (raw as KlineInterval) : null;
+}
 
 const DEFAULT_CREATE: {
   name: string;
@@ -435,6 +442,26 @@ function BotDetail({ bot, token }: { bot: TradingBotRow; token: string }) {
   const [marketTrail, setMarketTrail] = useState<TradingBotWorkerCandle[]>([]);
   const [paperTrail, setPaperTrail] = useState<TradingBotPaperTrade[]>([]);
   const [trailsError, setTrailsError] = useState<string | null>(null);
+  const botResultsPayload = useMemo(
+    () =>
+      ({
+        kind: "bot" as const,
+        symbol: bot.config.symbol,
+        interval: bot.config.candleInterval,
+        marketTrail,
+        paperTrail,
+      }) satisfies {
+        kind: "bot";
+        symbol: string;
+        interval: string;
+        marketTrail: TradingBotWorkerCandle[];
+        paperTrail: TradingBotPaperTrade[];
+      },
+    [bot.config.candleInterval, bot.config.symbol, marketTrail, paperTrail],
+  );
+  const simInterval = useMemo(() => asKlineInterval(bot.config.candleInterval), [bot.config.candleInterval]);
+  const simIntervalError =
+    simInterval === null ? `Unsupported candle interval for simulation: ${bot.config.candleInterval}` : null;
 
   useEffect(() => {
     let cancelled = false;
@@ -468,6 +495,13 @@ function BotDetail({ bot, token }: { bot: TradingBotRow; token: string }) {
         lastTickAt={bot.lastTickAt}
       />
       {trailsError ? <p className="text-[11px] text-red-300/90">Could not load trails: {trailsError}</p> : null}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-zinc-500">Results (bot paper trade history)</p>
+        </div>
+        {simIntervalError ? <p className="text-[11px] text-red-300/90">{simIntervalError}</p> : null}
+      </div>
+      <ResultsPanel title="Results" result={botResultsPayload} />
       <div>
         <p className="text-zinc-500">Config</p>
         <pre className="mt-1 overflow-x-auto rounded-lg border border-zinc-800/80 bg-zinc-950/80 p-3 text-zinc-300">

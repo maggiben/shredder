@@ -143,4 +143,72 @@ describe("TradingBotsService", () => {
     expect(args.data[0].low.toString()).toBe("68650.4");
     expect(args.data[0].close.toString()).toBe("68790.5");
   });
+
+  it("persists paper trade quantity/fees/equity fields from tick payload", async () => {
+    const createPaperMany = vi.fn().mockResolvedValue({ count: 1 });
+    const tx = {
+      tradingBot: {
+        update: vi.fn().mockResolvedValue(undefined),
+      },
+      tradingBotCandle: {
+        createMany: vi.fn().mockResolvedValue({ count: 0 }),
+      },
+      tradingBotPaperTrade: {
+        createMany: createPaperMany,
+      },
+    };
+    const prisma = {
+      tradingBot: {
+        findUnique: vi.fn().mockResolvedValue({ id: "bot-1" }),
+      },
+      $transaction: vi.fn(async (cb: (innerTx: typeof tx) => Promise<void>) => cb(tx)),
+      tradingBotCandle: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
+      tradingBotPaperTrade: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
+    } as const;
+
+    const service = new TradingBotsService(prisma as never, {
+      get: vi.fn().mockReturnValue(undefined),
+    } as never);
+    const payload: TradingBotTickPayload = {
+      t: new Date().toISOString(),
+      exchangeId: "binance",
+      paperTrading: true,
+      symbol: "BTCUSDT",
+      candleCount: 1,
+      aggregated: {},
+      risk: {},
+      marketDataProvider: "binance",
+      candleInterval: "5m",
+      candleLimit: 50,
+      candles: [],
+      paperTradeEvent: {
+        kind: "buy",
+        timestamp: 1_774_567_140_000,
+        price: 68_790.5,
+        quantity: 0.14537,
+        fee: 9.99,
+        feeRate: 0.001,
+        tradeValue: 9_990,
+        cashAfter: 0.01,
+        positionQtyAfter: 0.14537,
+        equityAfter: 9_990.01,
+      },
+    };
+
+    await expect(service.handleTickReport("bot-1", payload)).resolves.toBeUndefined();
+    const args = createPaperMany.mock.calls[0]?.[0];
+    expect(args).toBeTruthy();
+    expect(args.data).toHaveLength(1);
+    expect(args.data[0].quantity.toString()).toBe("0.14537");
+    expect(args.data[0].fee.toString()).toBe("9.99");
+    expect(args.data[0].feeRate.toString()).toBe("0.001");
+    expect(args.data[0].tradeValue.toString()).toBe("9990");
+    expect(args.data[0].cashAfter.toString()).toBe("0.01");
+    expect(args.data[0].positionQtyAfter.toString()).toBe("0.14537");
+    expect(args.data[0].equityAfter.toString()).toBe("9990.01");
+  });
 });

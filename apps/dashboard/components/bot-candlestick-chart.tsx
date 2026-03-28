@@ -239,7 +239,13 @@ export function BotCandlestickChart(props: {
 
   const klinesFallbackOk = fromApiTrail === null && intervalError === null;
 
-  const paperTrades = useMemo(() => parsePaperTrades(paperTrail), [paperTrail]);
+  /** Cap for marker placement (O(trades × bars)); API also caps persisted trail size. */
+  const paperTrades = useMemo(() => {
+    const parsed = parsePaperTrades(paperTrail);
+    const max = 4000;
+    if (parsed.length <= max) return parsed;
+    return parsed.slice(-max);
+  }, [paperTrail]);
 
   const rows = fromApiTrail ?? (klinesFallbackOk ? fallbackRows : null);
   const markers = useMemo(() => (rows ? markersForRows(rows, paperTrades) : []), [rows, paperTrades]);

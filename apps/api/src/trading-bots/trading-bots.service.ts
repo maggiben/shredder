@@ -23,8 +23,6 @@ import {
 } from "./trading-bot-config";
 
 const MAX_LOG_LINES = 500;
-const DEFAULT_MARKET_TRAIL_LIMIT = 800;
-const DEFAULT_PAPER_TRAIL_LIMIT = 800;
 
 type RuntimeEntry = {
   readonly proc: ChildProcess;
@@ -44,6 +42,13 @@ type PaperTrailRow = {
   kind: "buy" | "sell";
   timestamp: number;
   price: number;
+  quantity: number;
+  fee: number;
+  feeRate: number;
+  tradeValue: number;
+  cashAfter: number;
+  positionQtyAfter: number;
+  equityAfter: number;
 };
 
 type PrismaKnownRequestErrorLike = {
@@ -244,20 +249,37 @@ export class TradingBotsService implements OnModuleInit, OnModuleDestroy {
     return bot;
   }
 
-  private marketTrailLimit(): number {
+  private marketTrailLimit(): number | null {
     const raw = Number(this.config.get<string>("TRADING_BOT_MARKET_TRAIL_LIMIT") ?? "");
-    if (!Number.isFinite(raw) || raw < 50) {
-      return DEFAULT_MARKET_TRAIL_LIMIT;
+    if (!Number.isFinite(raw) || raw <= 0) {
+      return null;
     }
     return Math.floor(raw);
   }
 
-  private paperTrailLimit(): number {
+  private paperTrailLimit(): number | null {
     const raw = Number(this.config.get<string>("TRADING_BOT_PAPER_TRAIL_LIMIT") ?? "");
-    if (!Number.isFinite(raw) || raw < 50) {
-      return DEFAULT_PAPER_TRAIL_LIMIT;
+    if (!Number.isFinite(raw) || raw <= 0) {
+      return null;
     }
     return Math.floor(raw);
+  }
+
+  /** Hard cap for `/trading-bots/:id/trails` so the API never loads unbounded history into memory. */
+  private trailsApiMaxCandles(): number {
+    const raw = Number(this.config.get<string>("TRADING_BOT_TRAILS_API_MAX_CANDLES") ?? "4000");
+    if (!Number.isFinite(raw) || raw <= 0) {
+      return 4000;
+    }
+    return Math.min(100_000, Math.floor(raw));
+  }
+
+  private trailsApiMaxPaperTrades(): number {
+    const raw = Number(this.config.get<string>("TRADING_BOT_TRAILS_API_MAX_PAPER_TRADES") ?? "8000");
+    if (!Number.isFinite(raw) || raw <= 0) {
+      return 8000;
+    }
+    return Math.min(200_000, Math.floor(raw));
   }
 
   private extractCandles(payload: TradingBotTickPayload): CandleTrailRow[] {
@@ -287,15 +309,38 @@ export class TradingBotsService implements OnModuleInit, OnModuleDestroy {
       ev === undefined ||
       !Number.isFinite(ev.timestamp) ||
       !Number.isFinite(ev.price) ||
+      !Number.isFinite(ev.quantity) ||
+      !Number.isFinite(ev.fee) ||
+      !Number.isFinite(ev.feeRate) ||
+      !Number.isFinite(ev.tradeValue) ||
+      !Number.isFinite(ev.cashAfter) ||
+      !Number.isFinite(ev.positionQtyAfter) ||
+      !Number.isFinite(ev.equityAfter) ||
       (ev.kind !== "buy" && ev.kind !== "sell")
     ) {
       return [];
     }
-    return [{ kind: ev.kind, timestamp: ev.timestamp, price: ev.price }];
+    return [
+      {
+        kind: ev.kind,
+        timestamp: ev.timestamp,
+        price: ev.price,
+        quantity: ev.quantity,
+        fee: ev.fee,
+        feeRate: ev.feeRate,
+        tradeValue: ev.tradeValue,
+        cashAfter: ev.cashAfter,
+        positionQtyAfter: ev.positionQtyAfter,
+        equityAfter: ev.equityAfter,
+      },
+    ];
   }
 
   private async pruneMarketTrail(botId: string): Promise<void> {
     const limit = this.marketTrailLimit();
+    if (limit === null) {
+      return;
+    }
     const stale = await this.prisma.tradingBotCandle.findMany({
       where: { botId },
       orderBy: [{ timestamp: "desc" }, { createdAt: "desc" }],
@@ -313,6 +358,9 @@ export class TradingBotsService implements OnModuleInit, OnModuleDestroy {
 
   private async prunePaperTrail(botId: string): Promise<void> {
     const limit = this.paperTrailLimit();
+    if (limit === null) {
+      return;
+    }
     const stale = await this.prisma.tradingBotPaperTrade.findMany({
       where: { botId },
       orderBy: [{ timestamp: "desc" }, { createdAt: "desc" }],
@@ -466,17 +514,21 @@ export class TradingBotsService implements OnModuleInit, OnModuleDestroy {
 
   async trailsForUser(userId: string, botId: string) {
     await this.ensureOwner(userId, botId);
+    const maxCandles = this.trailsApiMaxCandles();
+    const maxPaper = this.trailsApiMaxPaperTrades();
     let candles: Awaited<ReturnType<typeof this.prisma.tradingBotCandle.findMany>>;
     let paperTrades: Awaited<ReturnType<typeof this.prisma.tradingBotPaperTrade.findMany>>;
     try {
       [candles, paperTrades] = await Promise.all([
         this.prisma.tradingBotCandle.findMany({
           where: { botId },
-          orderBy: { timestamp: "asc" },
+          orderBy: { timestamp: "desc" },
+          take: maxCandles,
         }),
         this.prisma.tradingBotPaperTrade.findMany({
           where: { botId },
-          orderBy: { timestamp: "asc" },
+          orderBy: { timestamp: "desc" },
+          take: maxPaper,
         }),
       ]);
     } catch (error) {
@@ -485,6 +537,8 @@ export class TradingBotsService implements OnModuleInit, OnModuleDestroy {
       }
       throw error;
     }
+    candles.reverse();
+    paperTrades.reverse();
     return {
       marketTrail: candles.map((c) => ({
         timestamp: Number(c.timestamp),
@@ -498,6 +552,13 @@ export class TradingBotsService implements OnModuleInit, OnModuleDestroy {
         kind: t.kind.toLowerCase() === "sell" ? "sell" : "buy",
         timestamp: Number(t.timestamp),
         price: Number(t.price),
+        quantity: Number(t.quantity ?? 0),
+        fee: Number(t.fee ?? 0),
+        feeRate: Number(t.feeRate ?? 0),
+        tradeValue: Number(t.tradeValue ?? 0),
+        cashAfter: Number(t.cashAfter ?? 0),
+        positionQtyAfter: Number(t.positionQtyAfter ?? 0),
+        equityAfter: Number(t.equityAfter ?? 0),
       })),
     };
   }
@@ -545,6 +606,13 @@ export class TradingBotsService implements OnModuleInit, OnModuleDestroy {
               kind: t.kind,
               timestamp: BigInt(Math.round(t.timestamp)),
               price: new Prisma.Decimal(t.price),
+              quantity: new Prisma.Decimal(t.quantity),
+              fee: new Prisma.Decimal(t.fee),
+              feeRate: new Prisma.Decimal(t.feeRate),
+              tradeValue: new Prisma.Decimal(t.tradeValue),
+              cashAfter: new Prisma.Decimal(t.cashAfter),
+              positionQtyAfter: new Prisma.Decimal(t.positionQtyAfter),
+              equityAfter: new Prisma.Decimal(t.equityAfter),
             })),
           });
         }

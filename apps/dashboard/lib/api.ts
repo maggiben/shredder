@@ -294,6 +294,13 @@ export type TradingBotPaperTrade = {
   kind: "buy" | "sell";
   timestamp: number;
   price: number;
+  quantity: number;
+  fee: number;
+  feeRate: number;
+  tradeValue: number;
+  cashAfter: number;
+  positionQtyAfter: number;
+  equityAfter: number;
 };
 
 /**

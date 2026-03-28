@@ -73,6 +73,13 @@ model TradingBotPaperTrade {
   kind      String
   timestamp BigInt
   price     Decimal    @db.Decimal(28, 12)
+  quantity  Decimal?   @db.Decimal(28, 12)
+  fee       Decimal?   @db.Decimal(28, 12)
+  feeRate   Decimal?   @map("fee_rate") @db.Decimal(28, 12)
+  tradeValue Decimal?  @map("trade_value") @db.Decimal(28, 12)
+  cashAfter Decimal?   @map("cash_after") @db.Decimal(28, 12)
+  positionQtyAfter Decimal? @map("position_qty_after") @db.Decimal(28, 12)
+  equityAfter Decimal? @map("equity_after") @db.Decimal(28, 12)
   createdAt DateTime   @default(now()) @map("created_at")
 
   @@index([botId, timestamp(sort: Desc)])
